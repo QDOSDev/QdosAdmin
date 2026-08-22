@@ -3,7 +3,6 @@ import { NavLink, useLocation, useParams } from 'react-router-dom';
 import { RadioGroup, Input, Textarea, Checkbox, Radio, Button, Spacer, Badge, Popover, PopoverTrigger, PopoverContent } from '@nextui-org/react';
 import Form_loader from '../View/form_Skeleton';
 import axios from 'axios';
-
 import Cookies from 'js-cookie';
 import { toast } from 'react-toastify';
 import { Card, CardHeader, CardBody, CardFooter } from "@nextui-org/card";
