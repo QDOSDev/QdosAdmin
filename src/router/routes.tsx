@@ -30,6 +30,16 @@ const AdminMessage = lazy(() => import('../pages/ticket/messages'));
 const Request = lazy(() => import('../pages/Requests/list'));
 const AdminRequest = lazy(() => import('../pages/Requests/adminList'));
 
+// Qdos admin console
+const RestaurantList = lazy(() => import('../pages/Qdos/Restaurants/RestaurantList'));
+const CouponList = lazy(() => import('../pages/Qdos/Coupons/CouponList'));
+const RideFareList = lazy(() => import('../pages/Qdos/RideFares/RideFareList'));
+const RiderPlanForm = lazy(() => import('../pages/Qdos/RiderPlans/RiderPlanForm'));
+const OrderList = lazy(() => import('../pages/Qdos/Orders/OrderList'));
+const UserList = lazy(() => import('../pages/Qdos/Users/UserList'));
+const RiderList = lazy(() => import('../pages/Qdos/Riders/RiderList'));
+const CreateAdmin = lazy(() => import('../pages/Qdos/Admins/CreateAdmin'));
+
 const routes = [
     {
         path: '/',
@@ -247,6 +257,78 @@ const routes = [
     {
         path: '/ScheduleInterface',
         element: <ScheduleInterface />,
+        layout: 'default',
+    },
+    {
+        path: '/qdos/restaurants',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <RestaurantList />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/coupons',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <CouponList />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/ride-fares',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <RideFareList />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/rider-plans',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <RiderPlanForm />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/orders',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <OrderList />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/users',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <UserList />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/riders',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <RiderList />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/admins',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <CreateAdmin />
+            </ProtectedRoute>
+        ),
         layout: 'default',
     },
 ];

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 64" width="240" height="64">
+  <rect x="0" y="4" width="56" height="56" rx="14" fill="#E2AD17" />
+  <path d="M28 16c-8.837 0-16 7.163-16 16s7.163 16 16 16c3.06 0 5.918-.86 8.35-2.35l4.5 4.5a2 2 0 0 0 2.83-2.83l-4.36-4.36A15.93 15.93 0 0 0 44 32c0-8.837-7.163-16-16-16Zm0 5.6a10.4 10.4 0 1 1 0 20.8 10.4 10.4 0 0 1 0-20.8Z" fill="#0b1220" />
+  <text x="70" y="40" font-family="Poppins, Arial, sans-serif" font-size="28" font-weight="700" fill="#ffffff">Qdos</text>
+</svg>

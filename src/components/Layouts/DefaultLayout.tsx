@@ -9,7 +9,6 @@ import Sidebar from './Sidebar';
 import Portals from '../../components/Portals';
 import Cookies from 'js-cookie';
 import { debounce } from 'lodash';
-import { profile } from '../../store/customerConfigSlice';
 const DefaultLayout = ({ children }: PropsWithChildren) => {
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
     const dispatch: AppDispatch = useDispatch();
@@ -48,12 +47,7 @@ const DefaultLayout = ({ children }: PropsWithChildren) => {
         };
     }, []);
 
-    useEffect(() => {
-        const token = Cookies.get('token');
-        if (token) {
-            dispatch(profile());
-        }
-    }, [dispatch]);
+    // QdosBackend has no admin-profile-fetch endpoint yet, so this is intentionally not dispatched.
 
     return (
         <App>

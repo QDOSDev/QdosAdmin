@@ -1,7 +1,7 @@
 // src/socket.ts
 import { io } from "socket.io-client"
 
-const endpoint = import.meta.env.VITE_API_LIVEHOST
+const endpoint = import.meta.env.VITE_API_HOST || import.meta.env.VITE_API_LIVEHOST
 
 // We won't connect immediately — allow setting auth dynamically
 const socket = io(endpoint, {

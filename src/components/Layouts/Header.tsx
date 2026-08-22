@@ -73,21 +73,9 @@ const Header = () => {
         }
     }, [location]);
 
-    const fetchNotification = async () => {
-        try {
-            const token = Cookies.get('token');
-            const { data } = await axios.get(`${endpoint}/v1/admin/list/listingNotify`, {
-                headers: {
-                    token: token,
-                },
-            });
-            if (data.success) {
-                setNotifications(data.data || []);
-            }
-        } catch (error) {
-            message.error('Failed to fetch notifications');
-        }
-    };
+    // QdosBackend has no admin-notifications endpoint yet, so this is a no-op for now
+    // (left in place so it's a one-line change to wire up once that endpoint exists).
+    const fetchNotification = async () => {};
 
     const handleSingleNotificationClick = async (notificationId: string) => {
         try {

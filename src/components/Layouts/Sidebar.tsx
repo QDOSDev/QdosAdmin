@@ -14,6 +14,8 @@ import Timeprocessing from '../../../public/assets/sidebar/timeprocessing';
 import Down from '../../../public/assets/sidebar/IconDownwhite';
 import Manageservices from '../../../public/assets/sidebar/Manageservices';
 import CRMPermissionIcon from '../../../public/assets/sidebar/CRMPermissions';
+import Reports from '../../../public/assets/sidebar/Reports';
+import Managesite from '../../../public/assets/sidebar/Managesite';
 const Sidebar = () => {
     const [currentMenu, setCurrentMenu] = useState<string>('');
     const [errorSubMenu, setErrorSubMenu] = useState(false);
@@ -72,7 +74,7 @@ const Sidebar = () => {
                             ) : null}
                         </NavLink> */}
 
-                        <img className="w-[140px]" src="/assets/images/gym_logo.png" alt="logo" />
+                        <img className="w-[140px]" src="/assets/images/qdos-logo.svg" alt="Qdos" />
                     </div>
                     <PerfectScrollbar className="h-[calc(100vh-80px)] relative">
                         <ul className="relative font-semibold space-y-0.5 p-4 py-0">
@@ -87,6 +89,7 @@ const Sidebar = () => {
                                         </NavLink>
                                     </li>
 
+                                    {/* Gym-domain nav (unlinked, not deleted, while this frontend is repointed at QdosBackend)
                                     <li className="nav-item">
                                         <NavLink to="/inventory" className="group" onClick={() => toggleMenu('')}>
                                             <div className="flex items-center">
@@ -164,6 +167,83 @@ const Sidebar = () => {
                                                     <div className="flex items-center">
                                                         <Timeprocessing className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
                                                         <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Requests')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+                                        </>
+                                    )}
+                                    */}
+
+                                    {userRole === 'admin' && (
+                                        <>
+                                            <li className="nav-item">
+                                                <NavLink to="/qdos/restaurants" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <Inventory className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Restaurants')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
+                                                <NavLink to="/qdos/coupons" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <HRM className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Coupons')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
+                                                <NavLink to="/qdos/ride-fares" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <Schedule className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Ride Fares')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
+                                                <NavLink to="/qdos/rider-plans" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <Timeprocessing className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Rider Plans')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
+                                                <NavLink to="/qdos/orders" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <Timeprocessing className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Orders')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
+                                                <NavLink to="/qdos/users" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <Reports className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Users')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
+                                                <NavLink to="/qdos/riders" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <Managesite className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Riders')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
+                                                <NavLink to="/qdos/admins" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <Manageservices className="group-hover:shrink-0" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Admins')}</span>
                                                     </div>
                                                 </NavLink>
                                             </li>

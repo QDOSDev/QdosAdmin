@@ -1,18 +1,39 @@
-import axios from "axios";
+import axios from 'axios';
+import Cookies from 'js-cookie';
 
-export const google_login = () => {
+export const google_login = () => {};
 
-};
-
-const Api_Base_url = import.meta.env.VITE_API_LIVEHOST;
-const Api_x_header_key = import.meta.env.VITE_API_KEY;
 const apiClient = axios.create({
     baseURL: import.meta.env.VITE_API_LIVEHOST,
     headers: {
-        "x-api-key": import.meta.env.VITE_API_X_HEADER_KEY,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
     },
 });
+
+apiClient.interceptors.request.use((config) => {
+    const token = Cookies.get('token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
+apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error?.response?.status === 401) {
+            Cookies.remove('token');
+            Cookies.remove('refreshToken');
+            localStorage.removeItem('userRole');
+            if (window.location.pathname !== '/') {
+                window.location.href = '/';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
+export default apiClient;
 
 export const api_calling = async (endpoint: string, body: any, customHeaders: Record<string, any> = {}) => {
     try {
@@ -24,16 +45,3 @@ export const api_calling = async (endpoint: string, body: any, customHeaders: Re
         throw error;
     }
 };
-
-
-// export const two_factor = async (endpoint: string, body: any, customHeaders: Record<string, any> = {}) => {
-//     try {
-//         const response = await apiClient.post(endpoint, body, {
-//             headers: customHeaders,
-//         });
-//         return response.data;
-//     } catch (error) {
-//         throw error;
-//     }
-// };
-

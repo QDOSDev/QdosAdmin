@@ -1,7 +1,6 @@
 import type React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import { Dumbbell } from 'lucide-react';
 import Animation from './Animation';
 import { Button, message } from 'antd';
 import axios from 'axios';
@@ -144,37 +143,23 @@ export default function OtpVerification() {
     };
 
     return (
-        <div className="relative flex items-center justify-center min-h-screen bg-[url(/assets/images/gym_bg.png)] bg-cover bg-center bg-no-repeat px-4 py-6 dark:bg-[#060818] sm:px-8 overflow-hidden">
+        <div className="relative flex items-center justify-center min-h-screen bg-gradient-to-br from-[#0b1220] via-[#111827] to-[#1a2332] px-4 py-6 sm:px-8 overflow-hidden">
             <Animation />
             {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#E2AD17]"></div>
                 </div>
             )}
 
             <div className="relative w-full max-w-[480px] h-auto mx-2 sm:mx-4 rounded-xl overflow-hidden shadow-lg">
-                {/* Background with gym pattern */}
-                <div className="absolute inset-0 bg-black opacity-50 z-0"></div>
-                <div
-                    className="absolute inset-0 z-0 bg-gradient-to-br from-[#1a2a36] to-[#0d1c28]"
-                    style={{
-                        backgroundImage: `url('/placeholder.svg?height=600&width=800')`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        backgroundBlendMode: 'overlay',
-                    }}
-                ></div>
-
                 <div className="relative flex flex-col justify-center rounded-xl bg-black/80 backdrop-blur-sm px-6 py-8 sm:w-full h-full mx-auto shadow-2xl z-10">
                     <div className="mx-auto w-full max-w-[380px] sm:max-w-[420px]">
                         <div className="mb-8 text-center">
                             <div className="flex justify-center mb-4">
-                                <div className="bg-red-600 p-3 rounded-full">
-                                    <Dumbbell size={32} className="text-white" />
-                                </div>
+                                <img src="/assets/images/qdos-mark.svg" alt="Qdos" className="h-14 w-14 rounded-full" />
                             </div>
                             <h1 className="text-2xl font-extrabold uppercase !leading-snug text-white md:text-3xl">
-                                OTP <span className="text-red-600">VERIFICATION</span>
+                                OTP <span className="text-[#E2AD17]">VERIFICATION</span>
                             </h1>
                             <p className="text-sm font-bold leading-normal text-gray-300">Enter the 6-digit code sent to your email</p>
                         </div>
