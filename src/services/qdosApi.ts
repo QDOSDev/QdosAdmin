@@ -19,6 +19,8 @@ export interface RestaurantListParams {
 
 export const getRestaurants = (params: RestaurantListParams = {}) => apiClient.get('/admin/restaurants', { params }).then((r) => r.data);
 
+export const getRestaurantById = (restaurantId: string) => apiClient.get(`/admin/restaurants/${restaurantId}`).then((r) => r.data);
+
 export const updateRestaurantStatus = (restaurantId: string, status: string) => apiClient.patch(`/admin/restaurants/${restaurantId}/status`, { status }).then((r) => r.data);
 
 export const blockRestaurant = (restaurantId: string, reason?: string) => apiClient.patch(`/admin/restaurants/${restaurantId}/block`, { reason }).then((r) => r.data);
@@ -109,6 +111,10 @@ export const getRideFarePlans = () => apiClient.get('/admin/ride-fares').then((r
 export const upsertRideFarePlan = (payload: Record<string, any>) => apiClient.post('/admin/ride-fares', payload).then((r) => r.data);
 
 // ---- Rider plan ----
+// There's only ever one active plan (upserted by an empty filter, not keyed
+// by id) — the price + duration of the recharge every rider pays to stay
+// online.
 
-export const upsertRiderPlan = (payload: { type: 'daily' | 'weekly' | 'monthly'; amount: number; features: string[] }) =>
-    apiClient.post('/admin/plan', payload).then((r) => r.data);
+export const getRiderPlan = () => apiClient.get('/admin/plan').then((r) => r.data);
+
+export const upsertRiderPlan = (payload: { price: number; durationHours?: number }) => apiClient.post('/admin/plan', payload).then((r) => r.data);

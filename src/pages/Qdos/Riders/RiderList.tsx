@@ -2,9 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { message } from 'antd';
 import Swal from 'sweetalert2';
 import { Modal, ModalContent, ModalHeader, ModalBody, useDisclosure } from '@nextui-org/react';
+import { MapContainer, TileLayer, Marker, CircleMarker, Popup, Polyline, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import ViewIcon from '../../../../public/assets/APSIcon/View';
 import Tableempty from '../../Tableempty';
 import { getRiders, getRiderById, updateRiderStatus } from '../../../services/qdosApi';
+
+// same fix as Viewgym.tsx — Leaflet's default marker icon paths break under
+// Vite's bundling, so point them at the CDN copies instead
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
 const STATUS_OPTIONS = ['pending', 'approved', 'rejected', 'blocked'];
 
@@ -13,6 +24,90 @@ const statusDotColor = (status: string) => {
     if (status === 'pending') return 'bg-yellow-500';
     return 'bg-red-500';
 };
+
+const MODE_LABEL: Record<string, { label: string; color: string }> = {
+    on_ride: { label: 'Cab', color: 'bg-blue-100 text-blue-700' },
+    delivering: { label: 'Delivery', color: 'bg-purple-100 text-purple-700' },
+    mixed: { label: 'Cab + Delivery', color: 'bg-indigo-100 text-indigo-700' },
+    idle: { label: 'Idle', color: 'bg-gray-100 text-gray-600' },
+};
+
+const modeBadge = (availability: string) => MODE_LABEL[availability] || MODE_LABEL.idle;
+
+// our backend stores GeoJSON coordinates as [lng, lat]; Leaflet wants [lat, lng]
+const toLatLng = (coordinates?: number[] | null): [number, number] | null => {
+    if (!coordinates || coordinates.length !== 2) return null;
+    const [lng, lat] = coordinates;
+    if (lng === 0 && lat === 0) return null; // never-updated default, not a real position
+    return [lat, lng];
+};
+
+function FitBoundsOnLoad({ points }: { points: [number, number][] }) {
+    const map = useMap();
+    useEffect(() => {
+        const t = setTimeout(() => {
+            map.invalidateSize();
+            if (points.length > 1) {
+                map.fitBounds(points as any, { padding: [40, 40] });
+            } else if (points.length === 1) {
+                map.setView(points[0], 14);
+            }
+        }, 100);
+        return () => clearTimeout(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [map]);
+    return null;
+}
+
+function RiderLiveMap({ rider }: { rider: any }) {
+    const riderPos = toLatLng(rider?.location?.coordinates);
+
+    const stops: { pos: [number, number]; kind: 'pickup' | 'drop'; label: string }[] = [];
+
+    if (rider?.activeRide?.rideId) {
+        const ride = rider.activeRide.rideId;
+        const pickup = toLatLng(ride.pickup?.coordinates);
+        const drop = toLatLng(ride.drop?.coordinates);
+        if (pickup) stops.push({ pos: pickup, kind: 'pickup', label: ride.pickup?.address || 'Pickup' });
+        if (drop) stops.push({ pos: drop, kind: 'drop', label: ride.drop?.address || 'Drop' });
+    }
+
+    rider?.activeDeliveries?.forEach((d: any) => {
+        if (!d.orderId) return;
+        const pickup = toLatLng(d.orderId.restaurantId?.location?.coordinates);
+        const drop = toLatLng(d.orderId.address?.coordinates);
+        if (pickup) stops.push({ pos: pickup, kind: 'pickup', label: d.orderId.restaurantId?.restaurantName || 'Restaurant' });
+        if (drop) stops.push({ pos: drop, kind: 'drop', label: d.orderId.address?.fullAddress || 'Delivery address' });
+    });
+
+    const allPoints = [...(riderPos ? [riderPos] : []), ...stops.map((s) => s.pos)];
+
+    if (allPoints.length === 0) {
+        return <div className="text-gray-500 text-sm">No location on file for this rider yet.</div>;
+    }
+
+    return (
+        <div className="h-72 rounded-lg overflow-hidden border border-gray-200">
+            <MapContainer center={allPoints[0]} zoom={14} style={{ height: '100%', width: '100%' }}>
+                <FitBoundsOnLoad points={allPoints} />
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' />
+                {riderPos && (
+                    <Marker position={riderPos}>
+                        <Popup>{rider.name} (rider)</Popup>
+                    </Marker>
+                )}
+                {stops.map((s, i) => (
+                    <CircleMarker key={i} center={s.pos} radius={9} pathOptions={{ color: s.kind === 'pickup' ? '#16a34a' : '#dc2626', fillOpacity: 0.8 }}>
+                        <Popup>
+                            {s.kind === 'pickup' ? 'Pickup' : 'Drop'}: {s.label}
+                        </Popup>
+                    </CircleMarker>
+                ))}
+                {riderPos && stops.length > 0 && <Polyline positions={[riderPos, ...stops.map((s) => s.pos)]} pathOptions={{ color: '#E2AD17', weight: 3, dashArray: '6 6' }} />}
+            </MapContainer>
+        </div>
+    );
+}
 
 export default function RiderList() {
     const [list, setList] = useState<any[]>([]);
@@ -122,6 +217,7 @@ export default function RiderList() {
                             <th className="px-4 py-3 text-left">Vehicle</th>
                             <th className="px-4 py-3 text-left">Status</th>
                             <th className="px-4 py-3 text-left">Online</th>
+                            <th className="px-4 py-3 text-left">Mode</th>
                             <th className="px-4 py-3 text-left">Actions</th>
                         </tr>
                     </thead>
@@ -129,13 +225,13 @@ export default function RiderList() {
                         {loading ? (
                             [...Array(5)].map((_, i) => (
                                 <tr key={i} className="border-b">
-                                    <td className="px-4 py-3" colSpan={6}>
+                                    <td className="px-4 py-3" colSpan={7}>
                                         <div className="w-full rounded h-5 bg-gray-200 animate-pulse" />
                                     </td>
                                 </tr>
                             ))
                         ) : list.length === 0 ? (
-                            <Tableempty length={6} />
+                            <Tableempty length={7} />
                         ) : (
                             list.map((r: any) => (
                                 <tr key={r._id} className="border-b last:border-b-0 hover:shadow-sm">
@@ -157,6 +253,9 @@ export default function RiderList() {
                                         </div>
                                     </td>
                                     <td className="px-4 py-3">{r.isOnline ? 'Online' : 'Offline'}</td>
+                                    <td className="px-4 py-3">
+                                        <span className={`px-2 py-1 rounded-md text-xs font-medium ${modeBadge(r.availability).color}`}>{modeBadge(r.availability).label}</span>
+                                    </td>
                                     <td className="px-4 py-3">
                                         <span className="cursor-pointer" onClick={() => openViewModal(r)}>
                                             <ViewIcon className="h-5 w-5 text-gray-500" />
@@ -220,14 +319,74 @@ export default function RiderList() {
                                         </div>
 
                                         <div className="border-t pt-3">
-                                            <div className="font-medium mb-1">Location</div>
-                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-gray-600">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div className="font-medium">Current Activity</div>
+                                                <span className={`px-2 py-1 rounded-md text-xs font-medium ${modeBadge(activeRider?.availability).color}`}>
+                                                    {modeBadge(activeRider?.availability).label}
+                                                </span>
+                                            </div>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-gray-600 mb-3">
                                                 <Field label="Coordinates" value={activeRider?.location?.coordinates ? activeRider.location.coordinates.join(', ') : undefined} />
                                                 <Field
-                                                    label="Last Updated"
+                                                    label="Location Last Updated"
                                                     value={activeRider?.location?.lastUpdated ? new Date(activeRider.location.lastUpdated).toLocaleString() : undefined}
                                                 />
                                             </div>
+
+                                            <div className="mb-3">
+                                                <RiderLiveMap rider={activeRider} />
+                                                <div className="flex gap-4 mt-2 text-xs text-gray-500">
+                                                    <span className="flex items-center gap-1">
+                                                        <span className="h-2 w-2 rounded-full bg-green-600 inline-block" /> Pickup
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
+                                                        <span className="h-2 w-2 rounded-full bg-red-600 inline-block" /> Drop
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {activeRider?.activeRide?.rideId && (
+                                                <div className="rounded-md border border-blue-200 bg-blue-50 p-3 mb-3">
+                                                    <div className="text-xs font-medium text-blue-700 mb-2">On a ride</div>
+                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                                        <Field label="Ride #" value={activeRider.activeRide.rideId.rideNumber} />
+                                                        <Field label="Ride Status" value={activeRider.activeRide.rideId.status} />
+                                                        <Field label="Vehicle Type" value={activeRider.activeRide.rideId.vehicleType} />
+                                                        <Field label="Passenger" value={activeRider.activeRide.rideId.userId?.name || activeRider.activeRide.rideId.userId?.phone} />
+                                                        <Field label="Fare" value={activeRider.activeRide.rideId.fare?.total !== undefined ? `₹${activeRider.activeRide.rideId.fare.total}` : undefined} />
+                                                        <Field label="Started" value={activeRider.activeRide.startedAt ? new Date(activeRider.activeRide.startedAt).toLocaleString() : undefined} />
+                                                        <Field label="Pickup" value={activeRider.activeRide.rideId.pickup?.address} />
+                                                        <Field label="Drop" value={activeRider.activeRide.rideId.drop?.address} />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {activeRider?.activeDeliveries?.length > 0 && (
+                                                <div className="rounded-md border border-purple-200 bg-purple-50 p-3">
+                                                    <div className="text-xs font-medium text-purple-700 mb-2">Active deliveries ({activeRider.activeDeliveries.length})</div>
+                                                    <div className="grid gap-2">
+                                                        {activeRider.activeDeliveries.map((d: any) => (
+                                                            <div key={d._id} className="rounded-md bg-white border border-purple-100 p-2 grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                                {d.orderId ? (
+                                                                    <>
+                                                                        <Field label="Order #" value={d.orderId.orderNumber} />
+                                                                        <Field label="Order Status" value={d.orderId.status} />
+                                                                        <Field label="Restaurant" value={d.orderId.restaurantId?.restaurantName} />
+                                                                        <Field label="Total" value={d.orderId.pricing?.total !== undefined ? `₹${d.orderId.pricing.total}` : undefined} />
+                                                                    </>
+                                                                ) : (
+                                                                    <span className="text-gray-500 col-span-2 md:col-span-4">Order no longer available.</span>
+                                                                )}
+                                                                <Field label="Picked Up" value={d.picked ? 'Yes' : 'No'} />
+                                                                <Field label="Delivered" value={d.delivered ? 'Yes' : 'No'} />
+                                                                <Field label="Assigned" value={d.assignedAt ? new Date(d.assignedAt).toLocaleString() : undefined} />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {activeRider?.availability === 'idle' && <div className="text-gray-500">Not currently on a ride or delivery.</div>}
                                         </div>
 
                                         <div className="border-t pt-3">

@@ -5,7 +5,7 @@ import { Modal, ModalContent, ModalHeader, ModalBody, useDisclosure } from '@nex
 import Edit from '../../../../public/assets/APSIcon/Edit';
 import ViewIcon from '../../../../public/assets/APSIcon/View';
 import Tableempty from '../../Tableempty';
-import { getRestaurants, updateRestaurantStatus, blockRestaurant, unblockRestaurant, editRestaurant, setRestaurantCommission } from '../../../services/qdosApi';
+import { getRestaurants, getRestaurantById, updateRestaurantStatus, blockRestaurant, unblockRestaurant, editRestaurant, setRestaurantCommission } from '../../../services/qdosApi';
 
 const STATUS_OPTIONS = ['pending', 'approved', 'rejected', 'inactive'];
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -40,6 +40,7 @@ export default function RestaurantList() {
     const [editForm, setEditForm] = useState(emptyEditForm);
     const [commissionForm, setCommissionForm] = useState<{ type: 'PERCENTAGE' | 'FIXED'; value: number }>({ type: 'PERCENTAGE', value: 0 });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [detailLoading, setDetailLoading] = useState(false);
 
     const fetchList = async (page = 1) => {
         setLoading(true);
@@ -115,9 +116,17 @@ export default function RestaurantList() {
         editModal.onOpen();
     };
 
-    const openViewModal = (restaurant: any) => {
+    const openViewModal = async (restaurant: any) => {
         setActiveRestaurant(restaurant);
         viewModal.onOpen();
+        setDetailLoading(true);
+        try {
+            const res = await getRestaurantById(restaurant._id);
+            setActiveRestaurant(res?.data || restaurant);
+        } catch (error: any) {
+            message.error(error?.response?.data?.message || 'Failed to fetch restaurant details.');
+        }
+        setDetailLoading(false);
     };
 
     const openCommissionModal = (restaurant: any) => {
