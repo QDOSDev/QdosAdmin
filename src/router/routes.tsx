@@ -35,6 +35,8 @@ const RestaurantList = lazy(() => import('../pages/Qdos/Restaurants/RestaurantLi
 const CouponList = lazy(() => import('../pages/Qdos/Coupons/CouponList'));
 const RideFareList = lazy(() => import('../pages/Qdos/RideFares/RideFareList'));
 const RiderPlanForm = lazy(() => import('../pages/Qdos/RiderPlans/RiderPlanForm'));
+const PlatformWallet = lazy(() => import('../pages/Qdos/Wallet/PlatformWallet'));
+const PayoutList = lazy(() => import('../pages/Qdos/Payouts/PayoutList'));
 const OrderList = lazy(() => import('../pages/Qdos/Orders/OrderList'));
 const UserList = lazy(() => import('../pages/Qdos/Users/UserList'));
 const RiderList = lazy(() => import('../pages/Qdos/Riders/RiderList'));
@@ -291,6 +293,24 @@ const routes = [
         element: (
             <ProtectedRoute allowedRoles={['admin']}>
                 <RiderPlanForm />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/wallet',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <PlatformWallet />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/payouts',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <PayoutList />
             </ProtectedRoute>
         ),
         layout: 'default',

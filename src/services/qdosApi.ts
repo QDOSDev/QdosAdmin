@@ -118,3 +118,35 @@ export const upsertRideFarePlan = (payload: Record<string, any>) => apiClient.po
 export const getRiderPlan = () => apiClient.get('/admin/plan').then((r) => r.data);
 
 export const upsertRiderPlan = (payload: { price: number; durationHours?: number }) => apiClient.post('/admin/plan', payload).then((r) => r.data);
+
+// ---- Platform wallet ----
+// The pool RIDE coupon discounts are funded from. When a passenger's fare is
+// discounted, the rider is still paid their full commission and the
+// difference is debited from here instead — an internal ledger admin tops
+// up out of the business's own budget, not a rider's own recharge wallet.
+
+export const getPlatformWallet = () => apiClient.get('/admin/wallet').then((r) => r.data);
+
+export const topUpPlatformWallet = (amount: number) => apiClient.post('/admin/wallet/topup', { amount }).then((r) => r.data);
+
+// ---- Rider payouts ----
+// A rider requests a withdrawal of rider.earnings.available against their
+// saved bank details (POST /api/v1/riders/payouts, rider-side); admin's job
+// here is to see the request + bank details, do the actual bank transfer
+// themselves (no payment gateway wired up for payouts), then mark it
+// complete or reject it.
+
+export interface PayoutListParams {
+    status?: 'PENDING' | 'COMPLETED' | 'REJECTED';
+    riderId?: string;
+    page?: number;
+    limit?: number;
+}
+
+export const getPayouts = (params: PayoutListParams = {}) => apiClient.get('/admin/payouts', { params }).then((r) => r.data);
+
+export const getPayoutById = (payoutId: string) => apiClient.get(`/admin/payouts/${payoutId}`).then((r) => r.data);
+
+export const completePayout = (payoutId: string, referenceId: string) => apiClient.patch(`/admin/payouts/${payoutId}/complete`, { referenceId }).then((r) => r.data);
+
+export const rejectPayout = (payoutId: string, reason: string) => apiClient.patch(`/admin/payouts/${payoutId}/reject`, { reason }).then((r) => r.data);

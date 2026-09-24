@@ -7,6 +7,8 @@ import Delete from '../../../../public/assets/APSIcon/delect';
 import Tableempty from '../../Tableempty';
 import { getCoupons, createCoupon, updateCoupon, deleteCoupon } from '../../../services/qdosApi';
 
+const VEHICLE_TYPES = ['MOTO', 'AUTO', 'CAR_ECONOMY'] as const;
+
 const emptyForm = {
     code: '',
     description: '',
@@ -14,6 +16,8 @@ const emptyForm = {
     discountValue: 0,
     minOrderValue: 0,
     maxDiscountAmount: 0,
+    appliesTo: 'ORDER' as 'ORDER' | 'RIDE',
+    applicableVehicleTypes: [] as string[],
     usageLimit: 0,
     validFrom: '',
     validUntil: '',
@@ -63,6 +67,8 @@ export default function CouponList() {
             discountValue: coupon.discountValue || 0,
             minOrderValue: coupon.minOrderValue || 0,
             maxDiscountAmount: coupon.maxDiscountAmount || 0,
+            appliesTo: coupon.appliesTo || 'ORDER',
+            applicableVehicleTypes: coupon.applicableVehicleTypes || [],
             usageLimit: coupon.usageLimit || 0,
             validFrom: coupon.validFrom ? coupon.validFrom.slice(0, 10) : '',
             validUntil: coupon.validUntil ? coupon.validUntil.slice(0, 10) : '',
@@ -124,6 +130,7 @@ export default function CouponList() {
                     <thead>
                         <tr className="border-b bg-gray-50">
                             <th className="px-4 py-3 text-left">Code</th>
+                            <th className="px-4 py-3 text-left">Applies To</th>
                             <th className="px-4 py-3 text-left">Discount</th>
                             <th className="px-4 py-3 text-left">Min Order</th>
                             <th className="px-4 py-3 text-left">Valid Until</th>
@@ -135,17 +142,25 @@ export default function CouponList() {
                         {loading ? (
                             [...Array(5)].map((_, i) => (
                                 <tr key={i} className="border-b">
-                                    <td className="px-4 py-3" colSpan={6}>
+                                    <td className="px-4 py-3" colSpan={7}>
                                         <div className="w-full rounded h-5 bg-gray-200 animate-pulse" />
                                     </td>
                                 </tr>
                             ))
                         ) : list.length === 0 ? (
-                            <Tableempty length={6} />
+                            <Tableempty length={7} />
                         ) : (
                             list.map((c: any) => (
                                 <tr key={c._id} className="border-b last:border-b-0 hover:shadow-sm">
                                     <td className="px-4 py-3 font-medium">{c.code}</td>
+                                    <td className="px-4 py-3">
+                                        <span className={`px-2 py-1 rounded-md text-xs font-medium ${c.appliesTo === 'RIDE' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                                            {c.appliesTo === 'RIDE' ? 'Ride' : 'Order'}
+                                        </span>
+                                        {c.appliesTo === 'RIDE' && c.applicableVehicleTypes?.length > 0 && (
+                                            <div className="text-xs text-gray-400 mt-1">{c.applicableVehicleTypes.join(', ')}</div>
+                                        )}
+                                    </td>
                                     <td className="px-4 py-3">
                                         {c.discountValue}
                                         {c.discountType === 'PERCENTAGE' ? '%' : ''}
@@ -212,6 +227,41 @@ export default function CouponList() {
                                             <option value="FIXED">Fixed</option>
                                         </select>
                                     </div>
+                                    <div className="input-field">
+                                        <label>Applies To</label>
+                                        <select
+                                            className="w-full border border-gray-300 rounded-md"
+                                            value={formData.appliesTo}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, appliesTo: e.target.value as 'ORDER' | 'RIDE', applicableVehicleTypes: [] })
+                                            }
+                                        >
+                                            <option value="ORDER">Food Order</option>
+                                            <option value="RIDE">Ride</option>
+                                        </select>
+                                    </div>
+                                    {formData.appliesTo === 'RIDE' && (
+                                        <div className="input-field col-span-2">
+                                            <label>Vehicle Types (leave all unchecked = applies to every type)</label>
+                                            <div className="flex gap-4 mt-1">
+                                                {VEHICLE_TYPES.map((vt) => (
+                                                    <label key={vt} className="flex items-center gap-1.5 text-sm font-normal">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={formData.applicableVehicleTypes.includes(vt)}
+                                                            onChange={(e) => {
+                                                                const next = e.target.checked
+                                                                    ? [...formData.applicableVehicleTypes, vt]
+                                                                    : formData.applicableVehicleTypes.filter((v) => v !== vt);
+                                                                setFormData({ ...formData, applicableVehicleTypes: next });
+                                                            }}
+                                                        />
+                                                        {vt}
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="input-field col-span-2">
                                         <label>
                                             Description <span className="text-red-500">*</span>
@@ -236,7 +286,7 @@ export default function CouponList() {
                                         />
                                     </div>
                                     <div className="input-field">
-                                        <label>Min Order Value</label>
+                                        <label>{formData.appliesTo === 'RIDE' ? 'Minimum Fare' : 'Min Order Value'}</label>
                                         <input
                                             type="number"
                                             className="w-full border border-gray-300 rounded-md"

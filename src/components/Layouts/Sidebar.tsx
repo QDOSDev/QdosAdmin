@@ -213,6 +213,24 @@ const Sidebar = () => {
                                             </li>
 
                                             <li className="nav-item">
+                                                <NavLink to="/qdos/wallet" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <CRMPermissionIcon className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Platform Wallet')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
+                                                <NavLink to="/qdos/payouts" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <Reports className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Rider Payouts')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
                                                 <NavLink to="/qdos/orders" className="group" onClick={() => toggleMenu('')}>
                                                     <div className="flex items-center">
                                                         <Timeprocessing className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
