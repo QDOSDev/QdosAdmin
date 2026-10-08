@@ -3,7 +3,7 @@ import { message } from 'antd';
 import { Modal, ModalContent, ModalHeader, ModalBody, useDisclosure } from '@nextui-org/react';
 import Edit from '../../../../public/assets/APSIcon/Edit';
 import Tableempty from '../../Tableempty';
-import { getRideFarePlans, upsertRideFarePlan } from '../../../services/qdosApi';
+import { getRideFarePlans, upsertRideFarePlan, getCities } from '../../../services/qdosApi';
 
 const VEHICLE_TYPES = ['MOTO', 'AUTO', 'CAR_ECONOMY'];
 
@@ -22,6 +22,7 @@ const emptyForm = {
 export default function RideFareList() {
     const [list, setList] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [cities, setCities] = useState<any[]>([]);
     const modal = useDisclosure();
     const [formData, setFormData] = useState(emptyForm);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,8 +38,20 @@ export default function RideFareList() {
         setLoading(false);
     };
 
+    const fetchCities = async () => {
+        try {
+            // limit past the real ceiling (~4300 for India) -- this dropdown wants
+            // every city in one shot, not a page of 10
+            const res = await getCities({ limit: 10000 });
+            setCities(res?.cities || []);
+        } catch {
+            // non-critical -- the city select just falls back to "Global default" only
+        }
+    };
+
     useEffect(() => {
         fetchList();
+        fetchCities();
     }, []);
 
     const openCreateModal = () => {
@@ -161,7 +174,22 @@ export default function RideFareList() {
                                     </div>
                                     <div className="input-field">
                                         <label>City (blank = global default)</label>
-                                        <input className="w-full border border-gray-300 rounded-md" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} />
+                                        <select className="w-full border border-gray-300 rounded-md" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })}>
+                                            <option value="">— Global default —</option>
+                                            {cities.map((c: any) => (
+                                                // value is lowercased to match what the backend actually stores
+                                                // (RideFarePlan.city is always trim+lowercase — see
+                                                // upsertRideFarePlan in services/admin/rideFare.service.js),
+                                                // so editing an existing plan pre-selects the right option
+                                                <option key={c._id} value={c.name.toLowerCase()}>
+                                                    {c.name}
+                                                    {c.stateId?.name ? ` (${c.stateId.name})` : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <p className="text-xs text-gray-400 mt-1">
+                                            Sourced from <a href="/qdos/locations" className="underline">Locations</a> — a plan only ever applies to rides whose pickup point falls inside that city's zone.
+                                        </p>
                                     </div>
                                     <div className="input-field">
                                         <label>Base Fare</label>

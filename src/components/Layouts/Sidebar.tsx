@@ -16,6 +16,7 @@ import Manageservices from '../../../public/assets/sidebar/Manageservices';
 import CRMPermissionIcon from '../../../public/assets/sidebar/CRMPermissions';
 import Reports from '../../../public/assets/sidebar/Reports';
 import Managesite from '../../../public/assets/sidebar/Managesite';
+import QdosSettingIcon from '../../../public/assets/sidebar/setting';
 const Sidebar = () => {
     const [currentMenu, setCurrentMenu] = useState<string>('');
     const [errorSubMenu, setErrorSubMenu] = useState(false);
@@ -204,6 +205,15 @@ const Sidebar = () => {
                                             </li>
 
                                             <li className="nav-item">
+                                                <NavLink to="/qdos/locations" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <Managesite className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Locations')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
                                                 <NavLink to="/qdos/rider-plans" className="group" onClick={() => toggleMenu('')}>
                                                     <div className="flex items-center">
                                                         <Timeprocessing className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
@@ -226,6 +236,15 @@ const Sidebar = () => {
                                                     <div className="flex items-center">
                                                         <Reports className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
                                                         <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Rider Payouts')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
+                                                <NavLink to="/qdos/settings" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <QdosSettingIcon className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Platform Settings')}</span>
                                                     </div>
                                                 </NavLink>
                                             </li>

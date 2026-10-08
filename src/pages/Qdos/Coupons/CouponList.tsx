@@ -5,7 +5,7 @@ import { Modal, ModalContent, ModalHeader, ModalBody, useDisclosure } from '@nex
 import Edit from '../../../../public/assets/APSIcon/Edit';
 import Delete from '../../../../public/assets/APSIcon/delect';
 import Tableempty from '../../Tableempty';
-import { getCoupons, createCoupon, updateCoupon, deleteCoupon } from '../../../services/qdosApi';
+import { getCoupons, createCoupon, updateCoupon, deleteCoupon, getRestaurants } from '../../../services/qdosApi';
 
 const VEHICLE_TYPES = ['MOTO', 'AUTO', 'CAR_ECONOMY'] as const;
 
@@ -18,6 +18,9 @@ const emptyForm = {
     maxDiscountAmount: 0,
     appliesTo: 'ORDER' as 'ORDER' | 'RIDE',
     applicableVehicleTypes: [] as string[],
+    applicableRestaurants: [] as string[],
+    fundedBy: 'PLATFORM' as 'PLATFORM' | 'RESTAURANT' | 'SHARED',
+    platformSharePercent: 50,
     usageLimit: 0,
     validFrom: '',
     validUntil: '',
@@ -29,6 +32,7 @@ export default function CouponList() {
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [restaurants, setRestaurants] = useState<any[]>([]);
 
     const modal = useDisclosure();
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -48,8 +52,18 @@ export default function CouponList() {
         setLoading(false);
     };
 
+    const fetchRestaurants = async () => {
+        try {
+            const res = await getRestaurants({ limit: 10000 });
+            setRestaurants(res?.restaurants || []);
+        } catch {
+            // non-critical -- the restaurant picker just falls back to "all restaurants" only
+        }
+    };
+
     useEffect(() => {
         fetchList(1);
+        fetchRestaurants();
     }, []);
 
     const openCreateModal = () => {
@@ -69,6 +83,9 @@ export default function CouponList() {
             maxDiscountAmount: coupon.maxDiscountAmount || 0,
             appliesTo: coupon.appliesTo || 'ORDER',
             applicableVehicleTypes: coupon.applicableVehicleTypes || [],
+            applicableRestaurants: (coupon.applicableRestaurants || []).map((r: any) => (typeof r === 'string' ? r : r._id)),
+            fundedBy: coupon.fundedBy || 'PLATFORM',
+            platformSharePercent: coupon.platformSharePercent ?? 50,
             usageLimit: coupon.usageLimit || 0,
             validFrom: coupon.validFrom ? coupon.validFrom.slice(0, 10) : '',
             validUntil: coupon.validUntil ? coupon.validUntil.slice(0, 10) : '',
@@ -131,6 +148,7 @@ export default function CouponList() {
                         <tr className="border-b bg-gray-50">
                             <th className="px-4 py-3 text-left">Code</th>
                             <th className="px-4 py-3 text-left">Applies To</th>
+                            <th className="px-4 py-3 text-left">Funded By</th>
                             <th className="px-4 py-3 text-left">Discount</th>
                             <th className="px-4 py-3 text-left">Min Order</th>
                             <th className="px-4 py-3 text-left">Valid Until</th>
@@ -142,13 +160,13 @@ export default function CouponList() {
                         {loading ? (
                             [...Array(5)].map((_, i) => (
                                 <tr key={i} className="border-b">
-                                    <td className="px-4 py-3" colSpan={7}>
+                                    <td className="px-4 py-3" colSpan={8}>
                                         <div className="w-full rounded h-5 bg-gray-200 animate-pulse" />
                                     </td>
                                 </tr>
                             ))
                         ) : list.length === 0 ? (
-                            <Tableempty length={7} />
+                            <Tableempty length={8} />
                         ) : (
                             list.map((c: any) => (
                                 <tr key={c._id} className="border-b last:border-b-0 hover:shadow-sm">
@@ -159,6 +177,28 @@ export default function CouponList() {
                                         </span>
                                         {c.appliesTo === 'RIDE' && c.applicableVehicleTypes?.length > 0 && (
                                             <div className="text-xs text-gray-400 mt-1">{c.applicableVehicleTypes.join(', ')}</div>
+                                        )}
+                                        {c.appliesTo === 'ORDER' && c.applicableRestaurants?.length > 0 && (
+                                            <div className="text-xs text-gray-400 mt-1">{c.applicableRestaurants.length} restaurant(s)</div>
+                                        )}
+                                        {c.appliesTo === 'ORDER' && (!c.applicableRestaurants || c.applicableRestaurants.length === 0) && (
+                                            <div className="text-xs text-gray-400 mt-1">All restaurants</div>
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        {c.appliesTo === 'RIDE' ? (
+                                            <span className="text-xs text-gray-400">Platform (wallet)</span>
+                                        ) : (
+                                            <>
+                                                <span
+                                                    className={`px-2 py-1 rounded-md text-xs font-medium ${
+                                                        c.fundedBy === 'RESTAURANT' ? 'bg-blue-100 text-blue-700' : c.fundedBy === 'SHARED' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
+                                                    }`}
+                                                >
+                                                    {c.fundedBy === 'RESTAURANT' ? 'Restaurant' : c.fundedBy === 'SHARED' ? 'Shared' : 'Platform'}
+                                                </span>
+                                                {c.fundedBy === 'SHARED' && <div className="text-xs text-gray-400 mt-1">{c.platformSharePercent}% platform</div>}
+                                            </>
                                         )}
                                     </td>
                                     <td className="px-4 py-3">
@@ -260,6 +300,79 @@ export default function CouponList() {
                                                     </label>
                                                 ))}
                                             </div>
+                                        </div>
+                                    )}
+                                    {formData.appliesTo === 'ORDER' && (
+                                        <div className="input-field col-span-2">
+                                            <label>Applicable Restaurants (leave all unchecked = applies to every restaurant)</label>
+                                            <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2 mt-1">
+                                                {restaurants.length === 0 ? (
+                                                    <span className="text-sm text-gray-400">No restaurants found.</span>
+                                                ) : (
+                                                    restaurants.map((r: any) => (
+                                                        <label key={r._id} className="flex items-center gap-1.5 text-sm font-normal py-0.5">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={formData.applicableRestaurants.includes(r._id)}
+                                                                onChange={(e) => {
+                                                                    const next = e.target.checked
+                                                                        ? [...formData.applicableRestaurants, r._id]
+                                                                        : formData.applicableRestaurants.filter((id) => id !== r._id);
+                                                                    setFormData({ ...formData, applicableRestaurants: next });
+                                                                }}
+                                                            />
+                                                            {r.restaurantName}
+                                                        </label>
+                                                    ))
+                                                )}
+                                            </div>
+                                            {formData.applicableRestaurants.length > 0 && (
+                                                <p className="text-xs text-gray-400 mt-1">{formData.applicableRestaurants.length} restaurant(s) selected — this coupon will only apply to these.</p>
+                                            )}
+                                        </div>
+                                    )}
+                                    {formData.appliesTo === 'ORDER' && (
+                                        <div className="input-field col-span-2">
+                                            <label>Funded By</label>
+                                            <div className="flex flex-col gap-2 mt-1">
+                                                {(
+                                                    [
+                                                        { value: 'PLATFORM', label: 'Zomato-funded', hint: 'Comes off admin commission, paid from the platform promo wallet. If the wallet can’t cover it, this coupon simply won’t apply — the restaurant is never charged for it.' },
+                                                        { value: 'RESTAURANT', label: 'Restaurant-funded', hint: 'Comes off the restaurant’s own earnings for that order. No wallet involved — always applies.' },
+                                                        { value: 'SHARED', label: 'Shared', hint: 'Split between the platform wallet and the restaurant’s earnings, by the percentage below.' },
+                                                    ] as const
+                                                ).map((opt) => (
+                                                    <label key={opt.value} className="flex items-start gap-2 text-sm font-normal">
+                                                        <input
+                                                            type="radio"
+                                                            name="fundedBy"
+                                                            className="mt-1"
+                                                            checked={formData.fundedBy === opt.value}
+                                                            onChange={() => setFormData({ ...formData, fundedBy: opt.value })}
+                                                        />
+                                                        <span>
+                                                            <span className="font-medium">{opt.label}</span>
+                                                            <div className="text-xs text-gray-400">{opt.hint}</div>
+                                                        </span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                            {formData.fundedBy === 'SHARED' && (
+                                                <div className="mt-2">
+                                                    <label>Platform Share (%)</label>
+                                                    <input
+                                                        type="number"
+                                                        min={0}
+                                                        max={100}
+                                                        className="w-full border border-gray-300 rounded-md"
+                                                        value={formData.platformSharePercent}
+                                                        onChange={(e) => setFormData({ ...formData, platformSharePercent: Number(e.target.value) })}
+                                                    />
+                                                    <p className="text-xs text-gray-400 mt-1">
+                                                        Platform wallet covers {formData.platformSharePercent}% of the discount; the restaurant covers the remaining {100 - formData.platformSharePercent}%.
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                     <div className="input-field col-span-2">

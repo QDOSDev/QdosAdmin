@@ -150,3 +150,41 @@ export const getPayoutById = (payoutId: string) => apiClient.get(`/admin/payouts
 export const completePayout = (payoutId: string, referenceId: string) => apiClient.patch(`/admin/payouts/${payoutId}/complete`, { referenceId }).then((r) => r.data);
 
 export const rejectPayout = (payoutId: string, reason: string) => apiClient.patch(`/admin/payouts/${payoutId}/reject`, { reason }).then((r) => r.data);
+
+// ---- States & Cities ----
+// Cities are geolocated service zones (center point + radius), not just
+// labels — a ride's pickup point is matched against them both to pick which
+// RideFarePlan.city applies and to enforce a per-city ride ban.
+
+export const getStates = (params: { isActive?: boolean } = {}) => apiClient.get('/admin/states', { params }).then((r) => r.data);
+
+export const createState = (payload: { name: string; code?: string }) => apiClient.post('/admin/states', payload).then((r) => r.data);
+
+export const updateState = (stateId: string, payload: Record<string, any>) => apiClient.patch(`/admin/states/${stateId}`, payload).then((r) => r.data);
+
+export const deleteState = (stateId: string) => apiClient.delete(`/admin/states/${stateId}`).then((r) => r.data);
+
+// Paginated response: { cities, totalCities, currentPage, totalPages } —
+// real city data is thousands of rows (see the backend's
+// scripts/seedIndiaStatesAndCities.js), so callers that genuinely want
+// "all of them" in one shot (e.g. a dropdown) pass a limit past the real
+// ceiling (~4300 for India) rather than relying on an unpaginated response.
+export const getCities = (params: { stateId?: string; isActive?: boolean; q?: string; page?: number; limit?: number } = {}) =>
+    apiClient.get('/admin/cities', { params }).then((r) => r.data);
+
+export const createCity = (payload: { name: string; stateId: string; location: { lat: number; lng: number }; radiusKm?: number }) =>
+    apiClient.post('/admin/cities', payload).then((r) => r.data);
+
+export const updateCity = (cityId: string, payload: Record<string, any>) => apiClient.patch(`/admin/cities/${cityId}`, payload).then((r) => r.data);
+
+export const deleteCity = (cityId: string) => apiClient.delete(`/admin/cities/${cityId}`).then((r) => r.data);
+
+export const setCityRideBan = (cityId: string, banned: boolean, reason?: string) => apiClient.patch(`/admin/cities/${cityId}/ride-ban`, { banned, reason }).then((r) => r.data);
+
+// ---- Platform settings ----
+// Single settings document (GST rate today) that feeds every food order's
+// pricing.tax at checkout (services/user/pricing.service.js on the backend).
+
+export const getPlatformSettings = () => apiClient.get('/admin/settings').then((r) => r.data);
+
+export const updatePlatformSettings = (payload: { gstPercentage?: number }) => apiClient.patch('/admin/settings', payload).then((r) => r.data);
