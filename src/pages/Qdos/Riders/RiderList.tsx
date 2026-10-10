@@ -238,7 +238,8 @@ export default function RiderList() {
                                     <td className="px-4 py-3">{r.name}</td>
                                     <td className="px-4 py-3">{r.phone}</td>
                                     <td className="px-4 py-3">
-                                        {r.vehicle?.type} · {r.vehicle?.number}
+                                        {r.vehicle?.type}
+                                        {r.vehicle?.type === 'car' ? ` (${r.vehicle?.isAC ? 'AC' : 'Non-AC'})` : ''} · {r.vehicle?.number}
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-2">
@@ -311,6 +312,7 @@ export default function RiderList() {
                                             <div className="font-medium mb-1">Vehicle &amp; Services</div>
                                             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-gray-600">
                                                 <Field label="Vehicle Type" value={activeRider?.vehicle?.type} />
+                                                {activeRider?.vehicle?.type === 'car' && <Field label="AC" value={activeRider?.vehicle?.isAC ? 'Yes' : 'No'} />}
                                                 <Field label="Vehicle Number" value={activeRider?.vehicle?.number} />
                                                 <Field label="Vehicle Model" value={activeRider?.vehicle?.model} />
                                                 <Field label="Delivery" value={activeRider?.services?.delivery ? 'Yes' : 'No'} />

@@ -5,7 +5,13 @@ import Edit from '../../../../public/assets/APSIcon/Edit';
 import Tableempty from '../../Tableempty';
 import { getRideFarePlans, upsertRideFarePlan, getCities } from '../../../services/qdosApi';
 
-const VEHICLE_TYPES = ['MOTO', 'AUTO', 'CAR_ECONOMY'];
+const VEHICLE_TYPES = ['MOTO', 'AUTO', 'CAR_ECONOMY', 'CAR_AC'];
+const VEHICLE_TYPE_LABELS: Record<string, string> = {
+    MOTO: 'Moto',
+    AUTO: 'Auto',
+    CAR_ECONOMY: 'Car (Non-AC)',
+    CAR_AC: 'Car (AC)',
+};
 
 const emptyForm = {
     vehicleType: 'MOTO',
@@ -125,7 +131,7 @@ export default function RideFareList() {
                         ) : (
                             list.map((p: any) => (
                                 <tr key={p._id} className="border-b last:border-b-0 hover:shadow-sm">
-                                    <td className="px-4 py-3 font-medium">{p.vehicleType}</td>
+                                    <td className="px-4 py-3 font-medium">{VEHICLE_TYPE_LABELS[p.vehicleType] || p.vehicleType}</td>
                                     <td className="px-4 py-3">{p.city || 'Global default'}</td>
                                     <td className="px-4 py-3">{p.baseFare}</td>
                                     <td className="px-4 py-3">{p.perKmRate}</td>
@@ -167,7 +173,7 @@ export default function RideFareList() {
                                         >
                                             {VEHICLE_TYPES.map((v) => (
                                                 <option key={v} value={v}>
-                                                    {v}
+                                                    {VEHICLE_TYPE_LABELS[v] || v}
                                                 </option>
                                             ))}
                                         </select>
