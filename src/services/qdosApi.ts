@@ -175,6 +175,8 @@ export const getCities = (params: { stateId?: string; isActive?: boolean; q?: st
 export const createCity = (payload: { name: string; stateId: string; location: { lat: number; lng: number }; radiusKm?: number }) =>
     apiClient.post('/admin/cities', payload).then((r) => r.data);
 
+export const getCityById = (cityId: string) => apiClient.get(`/admin/cities/${cityId}`).then((r) => r.data);
+
 export const updateCity = (cityId: string, payload: Record<string, any>) => apiClient.patch(`/admin/cities/${cityId}`, payload).then((r) => r.data);
 
 export const deleteCity = (cityId: string) => apiClient.delete(`/admin/cities/${cityId}`).then((r) => r.data);
@@ -188,3 +190,77 @@ export const setCityRideBan = (cityId: string, banned: boolean, reason?: string)
 export const getPlatformSettings = () => apiClient.get('/admin/settings').then((r) => r.data);
 
 export const updatePlatformSettings = (payload: { gstPercentage?: number }) => apiClient.patch('/admin/settings', payload).then((r) => r.data);
+
+// ---- Parcel pricing ----
+// A flat surcharge per parcel weight bucket, added on top of the normal
+// distance/time ride fare for a PARCEL booking (see POST
+// /api/v1/user/rides/book -> fare.parcelSurcharge on the backend). Always
+// exactly 4 fixed rows (self-seeded with a 0 surcharge server-side) — this
+// is an edit-in-place table, not a create/delete list.
+
+export type ParcelWeightBucket = 'UPTO_2KG' | '2_5KG' | '5_10KG' | 'ABOVE_10KG';
+
+export const getParcelPricingTiers = () => apiClient.get('/admin/parcel-pricing').then((r) => r.data);
+
+export const updateParcelPricingTier = (weightBucket: ParcelWeightBucket, payload: { surchargeAmount?: number; isActive?: boolean }) =>
+    apiClient.patch(`/admin/parcel-pricing/${weightBucket}`, payload).then((r) => r.data);
+
+// ---- Delivery surge pricing ----
+// Backend-driven automatic surge for food delivery, zoned by the existing
+// City service areas (Locations page) — a flat admin-configured base
+// delivery fee gets multiplied up when a zone's live demand (active orders)
+// outpaces its supply (online, available, fresh-location riders). See
+// services/delivery/deliverySurge.service.js on the backend for the full
+// algorithm (thresholds, hysteresis/stability, min-demand gate, caps).
+
+export interface DeliverySurgeSettings {
+    _id?: string;
+    enabled: boolean;
+    baseDeliveryFee: number;
+    rollingWindowMinutes: number;
+    riderFreshnessMinutes: number;
+    updateIntervalSeconds: number;
+    minDemandForSurge: number;
+    maxMultiplier: number;
+    maxAdditionalFee: number | null;
+    thresholds: { ratio: number; multiplier: number }[];
+    stabilityPeriodMinutes: number;
+    quoteValiditySeconds: number;
+}
+
+export const getDeliverySurgeSettings = () => apiClient.get('/admin/delivery-surge/settings').then((r) => r.data);
+
+export const updateDeliverySurgeSettings = (payload: Partial<DeliverySurgeSettings>) =>
+    apiClient.patch('/admin/delivery-surge/settings', payload).then((r) => r.data);
+
+export interface CitySurgeOverride {
+    enabled?: boolean | null;
+    baseDeliveryFee?: number | null;
+    maxMultiplier?: number | null;
+    maxAdditionalFee?: number | null;
+    minDemandForSurge?: number | null;
+}
+
+export const updateCitySurgeOverride = (cityId: string, payload: CitySurgeOverride) =>
+    apiClient.patch(`/admin/delivery-surge/cities/${cityId}/override`, payload).then((r) => r.data);
+
+export const getDeliverySurgeStatus = () => apiClient.get('/admin/delivery-surge/status').then((r) => r.data);
+
+// Cab/parcel rides share this exact same engine/settings/override — see the
+// backend's services/ride/rideSurge.service.js. One row per (city,
+// vehicleType, bookingType) pool instead of one per city, since cab and
+// parcel draw from separate rider pools even for the same vehicle type.
+export const getDeliveryRideSurgeStatus = () => apiClient.get('/admin/delivery-surge/ride-status').then((r) => r.data);
+
+export const previewDeliveryFee = (lat: number, lng: number) => apiClient.post('/admin/delivery-surge/preview', { lat, lng }).then((r) => r.data);
+
+export const getDeliverySurgeAudit = (params: { page?: number; limit?: number } = {}) =>
+    apiClient.get('/admin/delivery-surge/audit', { params }).then((r) => r.data);
+
+// ---- Chat (read-only, for support/dispute investigation) ----
+// Admin only ever reads a rider<->customer thread here, never sends into it
+// — the live back-and-forth happens entirely between the app rider/customer
+// (see POST /user/chats and POST /riders/chats on the backend).
+
+export const getChatMessages = (refType: 'Order' | 'Ride', refId: string) =>
+    apiClient.get(`/admin/chats/${refType}/${refId}/messages`, { params: { limit: 200 } }).then((r) => r.data);

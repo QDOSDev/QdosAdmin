@@ -3,6 +3,7 @@ import { message } from 'antd';
 import Swal from 'sweetalert2';
 import { Modal, ModalContent, ModalHeader, ModalBody, useDisclosure } from '@nextui-org/react';
 import Tableempty from '../../Tableempty';
+import ChatViewerModal from '../../ChatViewerModal';
 import { getOrders, getOrderById, getOrderStats, forceCancelOrder } from '../../../services/qdosApi';
 
 const STATUS_OPTIONS = ['PLACED', 'PREPARING', 'READY', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'REJECTED'];
@@ -27,6 +28,8 @@ export default function OrderList() {
     const detailModal = useDisclosure();
     const [activeOrder, setActiveOrder] = useState<any>(null);
     const [detailLoading, setDetailLoading] = useState(false);
+
+    const chatModal = useDisclosure();
 
     const fetchStats = async () => {
         try {
@@ -236,9 +239,16 @@ export default function OrderList() {
                                     <div className="py-8 text-center text-gray-500">Loading...</div>
                                 ) : (
                                     <div className="grid gap-3 pb-4 text-sm">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                             <span className="font-medium">{activeOrder.orderNumber}</span>
-                                            <span className={`px-2 py-1 rounded-md text-xs font-medium ${statusColor(activeOrder.status)}`}>{activeOrder.status}</span>
+                                            <div className="flex items-center gap-3">
+                                                {activeOrder.riderId && (
+                                                    <button className="text-xs underline text-blue-600" onClick={() => chatModal.onOpen()}>
+                                                        View Chat
+                                                    </button>
+                                                )}
+                                                <span className={`px-2 py-1 rounded-md text-xs font-medium ${statusColor(activeOrder.status)}`}>{activeOrder.status}</span>
+                                            </div>
                                         </div>
                                         <div>
                                             <div className="font-medium mb-1">Items</div>
@@ -328,6 +338,8 @@ export default function OrderList() {
                     )}
                 </ModalContent>
             </Modal>
+
+            <ChatViewerModal disclosure={chatModal} refType="Order" refId={activeOrder?._id || null} />
         </div>
     );
 }

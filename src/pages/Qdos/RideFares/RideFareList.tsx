@@ -237,13 +237,21 @@ export default function RideFareList() {
                                         />
                                     </div>
                                     <div className="input-field">
-                                        <label>Max Surge Multiplier</label>
+                                        <label>Max Surge Multiplier (legacy, unused)</label>
                                         <input
                                             type="number"
-                                            className="w-full border border-gray-300 rounded-md"
+                                            disabled
+                                            className="w-full border border-gray-200 rounded-md bg-gray-50 text-gray-400"
                                             value={formData.maxSurgeMultiplier}
                                             onChange={(e) => setFormData({ ...formData, maxSurgeMultiplier: Number(e.target.value) })}
                                         />
+                                        <p className="text-xs text-gray-400 mt-1">
+                                            No longer read for pricing — the surge cap is now configured on the{' '}
+                                            <a href="/qdos/delivery-surge" className="underline">
+                                                Delivery Surge
+                                            </a>{' '}
+                                            page, shared by both delivery and rides.
+                                        </p>
                                     </div>
                                     <div className="input-field flex items-center gap-2">
                                         <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />

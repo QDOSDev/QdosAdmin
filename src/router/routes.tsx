@@ -34,6 +34,8 @@ const AdminRequest = lazy(() => import('../pages/Requests/adminList'));
 const RestaurantList = lazy(() => import('../pages/Qdos/Restaurants/RestaurantList'));
 const CouponList = lazy(() => import('../pages/Qdos/Coupons/CouponList'));
 const RideFareList = lazy(() => import('../pages/Qdos/RideFares/RideFareList'));
+const ParcelPricingList = lazy(() => import('../pages/Qdos/ParcelPricing/ParcelPricingList'));
+const DeliverySurgeSettings = lazy(() => import('../pages/Qdos/DeliverySurge/DeliverySurgeSettings'));
 const RiderPlanForm = lazy(() => import('../pages/Qdos/RiderPlans/RiderPlanForm'));
 const PlatformWallet = lazy(() => import('../pages/Qdos/Wallet/PlatformWallet'));
 const PayoutList = lazy(() => import('../pages/Qdos/Payouts/PayoutList'));
@@ -286,6 +288,24 @@ const routes = [
         element: (
             <ProtectedRoute allowedRoles={['admin']}>
                 <RideFareList />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/parcel-pricing',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <ParcelPricingList />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/delivery-surge',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <DeliverySurgeSettings />
             </ProtectedRoute>
         ),
         layout: 'default',
