@@ -113,6 +113,7 @@ export default function RideFareList() {
                             <th className="px-4 py-3 text-left">Per Km</th>
                             <th className="px-4 py-3 text-left">Per Min</th>
                             <th className="px-4 py-3 text-left">Min Fare</th>
+                            <th className="px-4 py-3 text-left">Platform Fee</th>
                             <th className="px-4 py-3 text-left">Active</th>
                             <th className="px-4 py-3 text-left">Actions</th>
                         </tr>
@@ -121,13 +122,13 @@ export default function RideFareList() {
                         {loading ? (
                             [...Array(3)].map((_, i) => (
                                 <tr key={i} className="border-b">
-                                    <td className="px-4 py-3" colSpan={8}>
+                                    <td className="px-4 py-3" colSpan={9}>
                                         <div className="w-full rounded h-5 bg-gray-200 animate-pulse" />
                                     </td>
                                 </tr>
                             ))
                         ) : list.length === 0 ? (
-                            <Tableempty length={8} />
+                            <Tableempty length={9} />
                         ) : (
                             list.map((p: any) => (
                                 <tr key={p._id} className="border-b last:border-b-0 hover:shadow-sm">
@@ -137,6 +138,7 @@ export default function RideFareList() {
                                     <td className="px-4 py-3">{p.perKmRate}</td>
                                     <td className="px-4 py-3">{p.perMinuteRate}</td>
                                     <td className="px-4 py-3">{p.minimumFare}</td>
+                                    <td className="px-4 py-3">₹{p.bookingFee || 0}</td>
                                     <td className="px-4 py-3">
                                         <span className={`px-2 py-1 rounded-md text-xs font-medium ${p.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                                             {p.isActive ? 'Active' : 'Inactive'}
@@ -234,13 +236,14 @@ export default function RideFareList() {
                                         />
                                     </div>
                                     <div className="input-field">
-                                        <label>Booking Fee</label>
+                                        <label>Platform Fee (₹, flat per ride)</label>
                                         <input
                                             type="number"
                                             className="w-full border border-gray-300 rounded-md"
                                             value={formData.bookingFee}
                                             onChange={(e) => setFormData({ ...formData, bookingFee: Number(e.target.value) })}
                                         />
+                                        <p className="text-xs text-gray-400 mt-1">Added on top of base/distance/time for every ride of this vehicle type — shown to the rider/user in the fare breakdown.</p>
                                     </div>
                                     <div className="input-field">
                                         <label>Max Surge Multiplier (legacy, unused)</label>
