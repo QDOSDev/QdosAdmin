@@ -5,12 +5,13 @@ import Edit from '../../../../public/assets/APSIcon/Edit';
 import Tableempty from '../../Tableempty';
 import { getRideFarePlans, upsertRideFarePlan, getCities } from '../../../services/qdosApi';
 
-const VEHICLE_TYPES = ['MOTO', 'AUTO', 'CAR_ECONOMY', 'CAR_AC'];
+const VEHICLE_TYPES = ['MOTO', 'AUTO', 'CAR_ECONOMY', 'CAR_AC', 'TEMPO'];
 const VEHICLE_TYPE_LABELS: Record<string, string> = {
     MOTO: 'Moto',
     AUTO: 'Auto',
     CAR_ECONOMY: 'Car (Non-AC)',
     CAR_AC: 'Car (AC)',
+    TEMPO: 'Tempo (cargo)',
 };
 
 const emptyForm = {

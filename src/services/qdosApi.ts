@@ -189,7 +189,7 @@ export const setCityRideBan = (cityId: string, banned: boolean, reason?: string)
 
 export const getPlatformSettings = () => apiClient.get('/admin/settings').then((r) => r.data);
 
-export const updatePlatformSettings = (payload: { gstPercentage?: number }) => apiClient.patch('/admin/settings', payload).then((r) => r.data);
+export const updatePlatformSettings = (payload: { gstPercentage?: number; onlinePaymentFeePercentage?: number }) => apiClient.patch('/admin/settings', payload).then((r) => r.data);
 
 // ---- Parcel pricing ----
 // A flat surcharge per parcel weight bucket, added on top of the normal
@@ -217,6 +217,8 @@ export interface DeliverySurgeSettings {
     _id?: string;
     enabled: boolean;
     baseDeliveryFee: number;
+    riderBaseFare: number;
+    riderPerKmRate: number;
     rollingWindowMinutes: number;
     riderFreshnessMinutes: number;
     updateIntervalSeconds: number;
@@ -264,3 +266,32 @@ export const getDeliverySurgeAudit = (params: { page?: number; limit?: number } 
 
 export const getChatMessages = (refType: 'Order' | 'Ride', refId: string) =>
     apiClient.get(`/admin/chats/${refType}/${refId}/messages`, { params: { limit: 200 } }).then((r) => r.data);
+
+// ---- Advertisements (home screen carousel banners in the user app) ----
+
+export interface Advertisement {
+    _id: string;
+    image: { url: string; public_id: string };
+    title?: string;
+    linkUrl?: string;
+    displayOrder: number;
+    isActive: boolean;
+    startDate?: string | null;
+    endDate?: string | null;
+    createdAt?: string;
+}
+
+// multiple files in one request — each becomes its own banner
+export const uploadAdvertisements = (files: File[]) => {
+    const form = new FormData();
+    files.forEach((file) => form.append('images', file));
+    return apiClient.post('/admin/advertisements', form, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data);
+};
+
+export const getAdvertisements = (params: { page?: number; limit?: number } = {}) =>
+    apiClient.get('/admin/advertisements', { params }).then((r) => r.data);
+
+export const updateAdvertisement = (adId: string, payload: Partial<Pick<Advertisement, 'title' | 'linkUrl' | 'displayOrder' | 'isActive' | 'startDate' | 'endDate'>>) =>
+    apiClient.patch(`/admin/advertisements/${adId}`, payload).then((r) => r.data);
+
+export const deleteAdvertisement = (adId: string) => apiClient.delete(`/admin/advertisements/${adId}`).then((r) => r.data);

@@ -5,6 +5,7 @@ import { getPlatformSettings, updatePlatformSettings } from '../../../services/q
 export default function PlatformSettings() {
     const [loading, setLoading] = useState(true);
     const [gstPercentage, setGstPercentage] = useState('18');
+    const [onlinePaymentFeePercentage, setOnlinePaymentFeePercentage] = useState('2');
     const [current, setCurrent] = useState<any>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -15,6 +16,7 @@ export default function PlatformSettings() {
             setCurrent(res?.data || null);
             if (res?.data) {
                 setGstPercentage(String(res.data.gstPercentage ?? '18'));
+                setOnlinePaymentFeePercentage(String(res.data.onlinePaymentFeePercentage ?? '2'));
             }
         } catch (error: any) {
             message.error(error?.response?.data?.message || 'Failed to fetch platform settings.');
@@ -30,7 +32,7 @@ export default function PlatformSettings() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            await updatePlatformSettings({ gstPercentage: Number(gstPercentage) });
+            await updatePlatformSettings({ gstPercentage: Number(gstPercentage), onlinePaymentFeePercentage: Number(onlinePaymentFeePercentage) });
             message.success('Platform settings saved.');
             fetchSettings();
         } catch (error: any) {
@@ -55,6 +57,9 @@ export default function PlatformSettings() {
                             <div className="text-gray-600">
                                 Current GST rate: <span className="font-medium">{current.gstPercentage}%</span>
                             </div>
+                            <div className="text-gray-600">
+                                Current online payment fee: <span className="font-medium">{current.onlinePaymentFeePercentage}%</span>
+                            </div>
                             <div className="text-xs text-gray-400 mt-1">Last updated {current.updatedAt ? new Date(current.updatedAt).toLocaleString() : '-'}</div>
                         </div>
                     )}
@@ -75,8 +80,24 @@ export default function PlatformSettings() {
                                 onChange={(e) => setGstPercentage(e.target.value)}
                             />
                         </div>
+                        <div className="input-field">
+                            <label>
+                                Online Payment Fee (%) <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                required
+                                type="number"
+                                min={0}
+                                max={100}
+                                step="0.01"
+                                className="w-full border border-gray-300 rounded-md"
+                                value={onlinePaymentFeePercentage}
+                                onChange={(e) => setOnlinePaymentFeePercentage(e.target.value)}
+                            />
+                            <p className="text-xs text-gray-400 mt-1">Charged to the customer on every food order paid online (not COD), on top of items + GST + delivery fee. Goes entirely to the platform — doesn't affect the restaurant's or rider's earnings.</p>
+                        </div>
                         <div className="flex justify-start">
-                            <button disabled={isSubmitting || !gstPercentage} className="submit-btn" type="submit">
+                            <button disabled={isSubmitting || !gstPercentage || !onlinePaymentFeePercentage} className="submit-btn" type="submit">
                                 {isSubmitting ? 'Wait...' : 'Save'}
                             </button>
                         </div>

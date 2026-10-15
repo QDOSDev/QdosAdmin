@@ -25,6 +25,8 @@ const emptyOverride: CitySurgeOverride = {
 const emptySettings: SettingsType = {
     enabled: true,
     baseDeliveryFee: 20,
+    riderBaseFare: 30,
+    riderPerKmRate: 10,
     rollingWindowMinutes: 15,
     riderFreshnessMinutes: 10,
     updateIntervalSeconds: 120,
@@ -242,6 +244,31 @@ export default function DeliverySurgeSettings() {
                                 value={settings.baseDeliveryFee}
                                 onChange={(e) => setSettings({ ...settings, baseDeliveryFee: Number(e.target.value) })}
                             />
+                            <p className="text-xs text-gray-400 mt-1">What the customer is charged for delivery, before surge.</p>
+                        </div>
+
+                        <div className="input-field">
+                            <label>Rider Base Fare (₹)</label>
+                            <input
+                                type="number"
+                                min={0}
+                                className="w-full border border-gray-300 rounded-md"
+                                value={settings.riderBaseFare}
+                                onChange={(e) => setSettings({ ...settings, riderBaseFare: Number(e.target.value) })}
+                            />
+                            <p className="text-xs text-gray-400 mt-1">What the rider earns per delivery, before distance and surge. Separate from the customer's fee above.</p>
+                        </div>
+
+                        <div className="input-field">
+                            <label>Rider Per-Km Rate (₹)</label>
+                            <input
+                                type="number"
+                                min={0}
+                                className="w-full border border-gray-300 rounded-md"
+                                value={settings.riderPerKmRate}
+                                onChange={(e) => setSettings({ ...settings, riderPerKmRate: Number(e.target.value) })}
+                            />
+                            <p className="text-xs text-gray-400 mt-1">Added per km of delivery distance to the rider's payout. Both rider fields scale with the same surge multiplier as the customer's delivery fee, so riders earn more exactly when a zone is surging.</p>
                         </div>
 
                         <div className="input-field">

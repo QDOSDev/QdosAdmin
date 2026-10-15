@@ -45,6 +45,7 @@ const OrderList = lazy(() => import('../pages/Qdos/Orders/OrderList'));
 const UserList = lazy(() => import('../pages/Qdos/Users/UserList'));
 const RiderList = lazy(() => import('../pages/Qdos/Riders/RiderList'));
 const CreateAdmin = lazy(() => import('../pages/Qdos/Admins/CreateAdmin'));
+const AdvertisementList = lazy(() => import('../pages/Qdos/Advertisements/AdvertisementList'));
 
 const routes = [
     {
@@ -306,6 +307,15 @@ const routes = [
         element: (
             <ProtectedRoute allowedRoles={['admin']}>
                 <DeliverySurgeSettings />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/advertisements',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <AdvertisementList />
             </ProtectedRoute>
         ),
         layout: 'default',
