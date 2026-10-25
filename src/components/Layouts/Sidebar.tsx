@@ -90,91 +90,6 @@ const Sidebar = () => {
                                         </NavLink>
                                     </li>
 
-                                    {/* Gym-domain nav (unlinked, not deleted, while this frontend is repointed at QdosBackend)
-                                    <li className="nav-item">
-                                        <NavLink to="/inventory" className="group" onClick={() => toggleMenu('')}>
-                                            <div className="flex items-center">
-                                                <Inventory className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
-                                                <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Inventory')}</span>
-                                            </div>
-                                        </NavLink>
-                                    </li>
-                                    {userRole === 'admin' && (
-                                        <>
-                                            <li className="nav-item">
-                                                <NavLink to="/earning" className="group" onClick={() => toggleMenu('')}>
-                                                    <div className="flex items-center">
-                                                        <HRM className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
-                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Earning')}</span>
-                                                    </div>
-                                                </NavLink>
-                                            </li>
-
-                                            <li className="nav-item">
-                                                <NavLink to="/companylist" className="group" onClick={() => toggleMenu('')}>
-                                                    <div className="flex items-center">
-                                                        <Timeprocessing className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
-                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('People')}</span>
-                                                    </div>
-                                                </NavLink>
-                                            </li>
-
-                                            <li className="nav-item">
-                                                <NavLink to="/adminRequest" className="group" onClick={() => toggleMenu('')}>
-                                                    <div className="flex items-center">
-                                                        <Schedule className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
-                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Requests')}</span>
-                                                    </div>
-                                                </NavLink>
-                                            </li>
-                                        </>
-                                    )}
-
-                                    {userRole === 'admin' && (
-                                        <>
-                                            <li className="nav-item">
-                                                <NavLink to="/gym" className="group" onClick={() => toggleMenu('')}>
-                                                    <div className="flex items-center">
-                                                        <Timeprocessing className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
-                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Gym')}</span>
-                                                    </div>
-                                                </NavLink>
-                                            </li>
-
-                                            <li className="nav-item">
-                                                <NavLink to="/adminticket" className="group" onClick={() => toggleMenu('')}>
-                                                    <div className="flex items-center">
-                                                        <Timeprocessing className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
-                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Ticket')}</span>
-                                                    </div>
-                                                </NavLink>
-                                            </li>
-                                        </>
-                                    )}
-
-                                    {userRole === 'gym_owner' && (
-                                        <>
-                                            <li className="nav-item">
-                                                <NavLink to="/gym_ownerGym" className="group" onClick={() => toggleMenu('')}>
-                                                    <div className="flex items-center">
-                                                        <Timeprocessing className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
-                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Gym')}</span>
-                                                    </div>
-                                                </NavLink>
-                                            </li>
-
-                                            <li className="nav-item">
-                                                <NavLink to="/request" className="group" onClick={() => toggleMenu('')}>
-                                                    <div className="flex items-center">
-                                                        <Timeprocessing className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
-                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Requests')}</span>
-                                                    </div>
-                                                </NavLink>
-                                            </li>
-                                        </>
-                                    )}
-                                    */}
-
                                     {userRole === 'admin' && (
                                         <>
                                             <li className="nav-item">
@@ -227,6 +142,33 @@ const Sidebar = () => {
                                                     <div className="flex items-center">
                                                         <Schedule className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
                                                         <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Parcel Pricing')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
+                                                <NavLink to="/qdos/pilot-pricing" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <Schedule className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Pilot Pricing')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
+                                                <NavLink to="/qdos/pilot-live" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <Managesite className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Pilot Live')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
+                                                <NavLink to="/qdos/pilot-bookings" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <Reports className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Pilot Bookings')}</span>
                                                     </div>
                                                 </NavLink>
                                             </li>

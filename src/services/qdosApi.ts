@@ -93,6 +93,8 @@ export const unblockUser = (userId: string) => apiClient.patch(`/admin/users/${u
 
 export interface RiderListParams {
     status?: 'pending' | 'approved' | 'rejected' | 'blocked';
+    // only riders with this service turned on — 'pilot' = Hire a Pilot drivers
+    service?: 'delivery' | 'cab' | 'parcel' | 'pilot';
     page?: number;
     limit?: number;
 }
@@ -295,3 +297,87 @@ export const updateAdvertisement = (adId: string, payload: Partial<Pick<Advertis
     apiClient.patch(`/admin/advertisements/${adId}`, payload).then((r) => r.data);
 
 export const deleteAdvertisement = (adId: string) => apiClient.delete(`/admin/advertisements/${adId}`).then((r) => r.data);
+
+// ---- Hire a Pilot (a driver drives the customer's own car for an hours package) ----
+// Customer pays package + surcharges + platform fee online; time beyond the
+// package is billed per minute (extraPerHour / 60) and paid to the pilot in
+// cash. Money values are snapshotted per booking, so edits here only affect
+// new bookings.
+
+export type PilotTripType = 'ONE_WAY' | 'ROUND_TRIP';
+export type PilotTransmission = 'MANUAL' | 'AUTOMATIC' | 'LUXURY';
+export type PilotBookingStatus = 'PAYMENT_PENDING' | 'SEARCHING' | 'ACCEPTED' | 'ARRIVED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
+
+export interface PilotSettings {
+    isEnabled: boolean;
+    extraPerHour: number;
+    extraGraceMinutes: number;
+    platformFee: number;
+    commissionPercentage: number;
+    requestValidityMinutes: number;
+    searchRadiusKm: number;
+    cancellationFee: number;
+    minScheduleLeadMinutes: number;
+    maxAdvanceBookingDays: number;
+    tripTypeSurcharge: Record<PilotTripType, number>;
+    transmissionSurcharge: Record<PilotTransmission, number>;
+}
+
+export interface PilotPackage {
+    _id: string;
+    name?: string;
+    hours: number;
+    kmLimit?: number;
+    price: number;
+    badge?: string;
+    extraPerHour?: number;
+    displayOrder: number;
+    isActive: boolean;
+}
+
+// null clears name / badge / extraPerHour (extraPerHour null -> use the global rate)
+export type PilotPackagePayload = {
+    name?: string | null;
+    hours?: number;
+    kmLimit?: number;
+    price?: number;
+    badge?: string | null;
+    extraPerHour?: number | null;
+    displayOrder?: number;
+    isActive?: boolean;
+};
+
+export interface PilotBookingListParams {
+    status?: string; // comma-separated PilotBookingStatus values
+    startDate?: string;
+    endDate?: string;
+    search?: string; // booking number
+    page?: number;
+    limit?: number;
+}
+
+export const getPilotSettings = () => apiClient.get('/admin/pilot/settings').then((r) => r.data);
+
+export const updatePilotSettings = (payload: Partial<PilotSettings>) => apiClient.patch('/admin/pilot/settings', payload).then((r) => r.data);
+
+export const getPilotPackages = () => apiClient.get('/admin/pilot/packages').then((r) => r.data);
+
+export const createPilotPackage = (payload: PilotPackagePayload) => apiClient.post('/admin/pilot/packages', payload).then((r) => r.data);
+
+export const updatePilotPackage = (packageId: string, payload: PilotPackagePayload) => apiClient.patch(`/admin/pilot/packages/${packageId}`, payload).then((r) => r.data);
+
+export const deletePilotPackage = (packageId: string) => apiClient.delete(`/admin/pilot/packages/${packageId}`).then((r) => r.data);
+
+export const getPilotBookings = (params: PilotBookingListParams = {}) => apiClient.get('/admin/pilot/bookings', { params }).then((r) => r.data);
+
+export const getPilotBookingById = (bookingId: string) => apiClient.get(`/admin/pilot/bookings/${bookingId}`).then((r) => r.data);
+
+// live monitor: { serverTime, counts, bookings (SEARCHING/ACCEPTED/ARRIVED/ONGOING), pilots (online or on a job) }
+export const getPilotLive = () => apiClient.get('/admin/pilot/live').then((r) => r.data);
+
+// full refund unless refundAmount is given (partial)
+export const cancelPilotBooking = (bookingId: string, payload: { reason?: string; refundAmount?: number }) =>
+    apiClient.post(`/admin/pilot/bookings/${bookingId}/cancel`, payload).then((r) => r.data);
+
+// only for a booking whose refund.status is FAILED
+export const retryPilotRefund = (bookingId: string) => apiClient.post(`/admin/pilot/bookings/${bookingId}/refund`).then((r) => r.data);

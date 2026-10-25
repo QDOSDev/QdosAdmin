@@ -195,9 +195,9 @@ export default function CouponList() {
                                                         c.fundedBy === 'RESTAURANT' ? 'bg-blue-100 text-blue-700' : c.fundedBy === 'SHARED' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
                                                     }`}
                                                 >
-                                                    {c.fundedBy === 'RESTAURANT' ? 'Restaurant' : c.fundedBy === 'SHARED' ? 'Shared' : 'Platform'}
+                                                    {c.fundedBy === 'RESTAURANT' ? 'Restaurant' : c.fundedBy === 'SHARED' ? 'Shared' : 'Qdos'}
                                                 </span>
-                                                {c.fundedBy === 'SHARED' && <div className="text-xs text-gray-400 mt-1">{c.platformSharePercent}% platform</div>}
+                                                {c.fundedBy === 'SHARED' && <div className="text-xs text-gray-400 mt-1">{c.platformSharePercent}% Qdos</div>}
                                             </>
                                         )}
                                     </td>
@@ -337,9 +337,9 @@ export default function CouponList() {
                                             <div className="flex flex-col gap-2 mt-1">
                                                 {(
                                                     [
-                                                        { value: 'PLATFORM', label: 'Zomato-funded', hint: 'Comes off admin commission, paid from the platform promo wallet. If the wallet can’t cover it, this coupon simply won’t apply — the restaurant is never charged for it.' },
+                                                        { value: 'PLATFORM', label: 'Qdos-funded', hint: 'Comes off admin commission, paid from the Qdos promo wallet. If the wallet can’t cover it, this coupon simply won’t apply — the restaurant is never charged for it.' },
                                                         { value: 'RESTAURANT', label: 'Restaurant-funded', hint: 'Comes off the restaurant’s own earnings for that order. No wallet involved — always applies.' },
-                                                        { value: 'SHARED', label: 'Shared', hint: 'Split between the platform wallet and the restaurant’s earnings, by the percentage below.' },
+                                                        { value: 'SHARED', label: 'Shared', hint: 'Split between the Qdos promo wallet and the restaurant’s earnings, by the percentage below.' },
                                                     ] as const
                                                 ).map((opt) => (
                                                     <label key={opt.value} className="flex items-start gap-2 text-sm font-normal">

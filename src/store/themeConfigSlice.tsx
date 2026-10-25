@@ -279,7 +279,7 @@ const themeConfigSlice = createSlice({
             localStorage.setItem('sidebar', String(state.sidebar)); // Save the sidebar state to localStorage
         },
         setPageTitle(state, { payload }: PayloadAction<string>) {
-            document.title = `${payload} | APS Security`;
+            document.title = `${payload} | Qdos Admin`;
         },
     },
 });

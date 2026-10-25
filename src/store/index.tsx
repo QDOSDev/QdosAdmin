@@ -1,11 +1,9 @@
 
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import themeConfigSlice from './themeConfigSlice';
-import customerSlice from './customerConfigSlice';
 
 const rootReducer = combineReducers({
     themeConfig: themeConfigSlice,
-    customerConfig: customerSlice,
 });
 
 const store = configureStore({

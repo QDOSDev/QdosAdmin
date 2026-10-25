@@ -5,6 +5,9 @@ import Edit from '../../../../public/assets/APSIcon/Edit';
 import Tableempty from '../../Tableempty';
 import { getAdvertisements, uploadAdvertisements, updateAdvertisement, deleteAdvertisement, Advertisement } from '../../../services/qdosApi';
 
+const MAX_FILES = 10;
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
 export default function AdvertisementList() {
     const [list, setList] = useState<Advertisement[]>([]);
     const [loading, setLoading] = useState(true);
@@ -34,23 +37,46 @@ export default function AdvertisementList() {
 
     const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files ? Array.from(e.target.files) : [];
+        const resetInput = () => {
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        };
         if (files.length === 0) return;
+
+        // mirror the backend's multer limits so the admin gets a clear message up front
+        if (files.length > MAX_FILES) {
+            message.error(`You can upload at most ${MAX_FILES} images at once.`);
+            resetInput();
+            return;
+        }
+        const invalid = files.filter((f) => !f.type.startsWith('image/'));
+        if (invalid.length > 0) {
+            message.error(`Not an image: ${invalid.map((f) => f.name).join(', ')}`);
+            resetInput();
+            return;
+        }
+        const tooLarge = files.filter((f) => f.size > MAX_FILE_SIZE);
+        if (tooLarge.length > 0) {
+            message.error(`Each image must be 5MB or smaller. Too large: ${tooLarge.map((f) => f.name).join(', ')}`);
+            resetInput();
+            return;
+        }
 
         setUploading(true);
         try {
             const res = await uploadAdvertisements(files);
-            const failed = res?.data?.failed || [];
+            const created = res?.data?.created || [];
+            const failed: { filename: string; error: string }[] = res?.data?.failed || [];
             if (failed.length > 0) {
-                message.warning(`${res.data.created.length} uploaded, ${failed.length} failed.`);
+                message.warning(`${created.length} uploaded, ${failed.length} failed: ${failed.map((f) => `${f.filename} (${f.error})`).join(', ')}`, 6);
             } else {
-                message.success(`${res.data.created.length} advertisement(s) uploaded.`);
+                message.success(`${created.length} advertisement(s) uploaded.`);
             }
             fetchList();
         } catch (error: any) {
             message.error(error?.response?.data?.message || 'Upload failed.');
         }
         setUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
+        resetInput();
     };
 
     const toggleActive = async (ad: Advertisement) => {

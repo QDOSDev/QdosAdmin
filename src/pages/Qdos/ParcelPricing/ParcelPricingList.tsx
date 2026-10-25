@@ -51,7 +51,7 @@ export default function ParcelPricingList() {
         <div className="panel">
             <h2 className="text-lg font-semibold mb-1">Parcel Pricing</h2>
             <p className="text-sm text-gray-500 mb-4">
-                Flat surcharge added on top of the normal distance/time ride fare for a PARCEL booking in each weight bucket — same idea as Rapido/Porter charging more for heavier packages. Only affects bookings placed after you save; an existing ride's fare is already frozen.
+                Flat surcharge added on top of the normal distance/time ride fare for a PARCEL booking in each weight bucket, so heavier packages cost more. Only affects bookings placed after you save; an existing ride's fare is already frozen.
             </p>
 
             <div className="table-wrapper overflow-x-auto">

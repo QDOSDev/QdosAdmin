@@ -19,6 +19,21 @@ L.Icon.Default.mergeOptions({
 
 const STATUS_OPTIONS = ['pending', 'approved', 'rejected', 'blocked'];
 
+const SERVICE_OPTIONS: { value: string; label: string }[] = [
+    { value: 'delivery', label: 'Delivery' },
+    { value: 'cab', label: 'Cab' },
+    { value: 'parcel', label: 'Parcel' },
+    { value: 'pilot', label: 'Hire a Pilot' },
+];
+
+// Hire a Pilot drivers drive the CUSTOMER'S car — a pilot-only partner has no vehicle of their own
+const vehicleText = (r: any) => {
+    if (!r?.vehicle?.type) return r?.services?.pilot ? 'No vehicle (pilot only)' : '-';
+    return `${r.vehicle.type}${r.vehicle.type === 'car' ? ` (${r.vehicle.isAC ? 'AC' : 'Non-AC'})` : ''} · ${r.vehicle.number || ''}`;
+};
+
+const serviceList = (r: any) => SERVICE_OPTIONS.filter((s) => r?.services?.[s.value]).map((s) => s.label);
+
 const statusDotColor = (status: string) => {
     if (status === 'approved') return 'bg-green-500';
     if (status === 'pending') return 'bg-yellow-500';
@@ -29,6 +44,7 @@ const MODE_LABEL: Record<string, { label: string; color: string }> = {
     on_ride: { label: 'Cab', color: 'bg-blue-100 text-blue-700' },
     delivering: { label: 'Delivery', color: 'bg-purple-100 text-purple-700' },
     mixed: { label: 'Cab + Delivery', color: 'bg-indigo-100 text-indigo-700' },
+    on_pilot: { label: 'On Pilot', color: 'bg-orange-100 text-orange-700' },
     idle: { label: 'Idle', color: 'bg-gray-100 text-gray-600' },
 };
 
@@ -115,6 +131,7 @@ export default function RiderList() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [statusFilter, setStatusFilter] = useState('');
+    const [serviceFilter, setServiceFilter] = useState('');
 
     const viewModal = useDisclosure();
     const [activeRider, setActiveRider] = useState<any>(null);
@@ -123,7 +140,7 @@ export default function RiderList() {
     const fetchList = async (page = 1) => {
         setLoading(true);
         try {
-            const res = await getRiders({ status: (statusFilter as any) || undefined, page, limit: 10 });
+            const res = await getRiders({ status: (statusFilter as any) || undefined, service: (serviceFilter as any) || undefined, page, limit: 10 });
             setList(res?.riders || []);
             setCurrentPage(res?.currentPage || page);
             setTotalPages(res?.totalPages || 1);
@@ -136,7 +153,7 @@ export default function RiderList() {
     useEffect(() => {
         fetchList(1);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [statusFilter]);
+    }, [statusFilter, serviceFilter]);
 
     const STATUS_COPY: Record<string, { title: string; text?: string; confirmColor: string; confirmText: string }> = {
         approved: {
@@ -198,14 +215,24 @@ export default function RiderList() {
         <div className="panel">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <h2 className="text-lg font-semibold">Riders</h2>
-                <select className="border border-gray-300 rounded-md px-3 py-2" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                    <option value="">All statuses</option>
-                    {STATUS_OPTIONS.map((s) => (
-                        <option key={s} value={s}>
-                            {s}
-                        </option>
-                    ))}
-                </select>
+                <div className="flex flex-wrap gap-3">
+                    <select className="border border-gray-300 rounded-md px-3 py-2" value={serviceFilter} onChange={(e) => setServiceFilter(e.target.value)} data-testid="rider-service-filter">
+                        <option value="">All services</option>
+                        {SERVICE_OPTIONS.map((s) => (
+                            <option key={s.value} value={s.value}>
+                                {s.label}
+                            </option>
+                        ))}
+                    </select>
+                    <select className="border border-gray-300 rounded-md px-3 py-2" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} data-testid="rider-status-filter">
+                        <option value="">All statuses</option>
+                        {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>
+                                {s}
+                            </option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             <div className="table-wrapper overflow-x-auto">
@@ -238,8 +265,8 @@ export default function RiderList() {
                                     <td className="px-4 py-3">{r.name}</td>
                                     <td className="px-4 py-3">{r.phone}</td>
                                     <td className="px-4 py-3">
-                                        {r.vehicle?.type}
-                                        {r.vehicle?.type === 'car' ? ` (${r.vehicle?.isAC ? 'AC' : 'Non-AC'})` : ''} · {r.vehicle?.number}
+                                        {vehicleText(r)}
+                                        <div className="text-xs text-gray-400">{serviceList(r).join(' · ')}</div>
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-2">
@@ -315,8 +342,18 @@ export default function RiderList() {
                                                 {activeRider?.vehicle?.type === 'car' && <Field label="AC" value={activeRider?.vehicle?.isAC ? 'Yes' : 'No'} />}
                                                 <Field label="Vehicle Number" value={activeRider?.vehicle?.number} />
                                                 <Field label="Vehicle Model" value={activeRider?.vehicle?.model} />
+                                                {!activeRider?.vehicle?.type && <Field label="Vehicle" value={vehicleText(activeRider)} />}
                                                 <Field label="Delivery" value={activeRider?.services?.delivery ? 'Yes' : 'No'} />
                                                 <Field label="Cab" value={activeRider?.services?.cab ? 'Yes' : 'No'} />
+                                                <Field label="Parcel" value={activeRider?.services?.parcel ? 'Yes' : 'No'} />
+                                                <Field label="Hire a Pilot" value={activeRider?.services?.pilot ? 'Yes' : 'No'} />
+                                                {activeRider?.services?.pilot && (
+                                                    <>
+                                                        <Field label="Pilot Drives" value={activeRider?.pilotProfile?.transmissions?.join(', ')} />
+                                                        <Field label="Driving Experience" value={activeRider?.pilotProfile?.experienceYears != null ? `${activeRider.pilotProfile.experienceYears} yrs` : undefined} />
+                                                        <Field label="Pilot Trips" value={activeRider?.stats?.totalPilotTrips ?? 0} />
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
 
@@ -384,6 +421,21 @@ export default function RiderList() {
                                                                 <Field label="Assigned" value={d.assignedAt ? new Date(d.assignedAt).toLocaleString() : undefined} />
                                                             </div>
                                                         ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {activeRider?.activePilotBooking?.bookingId && (
+                                                <div className="rounded-md border border-orange-200 bg-orange-50 p-3 mb-3">
+                                                    <div className="text-xs font-medium text-orange-700 mb-2">On a Hire a Pilot booking</div>
+                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                                        <Field label="Booking #" value={activeRider.activePilotBooking.bookingId.bookingNumber} />
+                                                        <Field label="Status" value={activeRider.activePilotBooking.bookingId.status} />
+                                                        <Field label="Package" value={activeRider.activePilotBooking.bookingId.pricing?.packageName} />
+                                                        <Field label="Customer" value={activeRider.activePilotBooking.bookingId.userId?.name || activeRider.activePilotBooking.bookingId.userId?.phone} />
+                                                        <Field label="Car" value={[activeRider.activePilotBooking.bookingId.car?.model, activeRider.activePilotBooking.bookingId.car?.number].filter(Boolean).join(' · ')} />
+                                                        <Field label="Pilot Earns" value={activeRider.activePilotBooking.bookingId.pricing?.pilotEarning !== undefined ? `₹${activeRider.activePilotBooking.bookingId.pricing.pilotEarning}` : undefined} />
+                                                        <Field label="Pickup" value={activeRider.activePilotBooking.bookingId.pickup?.address} />
                                                     </div>
                                                 </div>
                                             )}
