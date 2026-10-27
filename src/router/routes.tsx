@@ -11,6 +11,7 @@ const ParcelPricingList = lazy(() => import('../pages/Qdos/ParcelPricing/ParcelP
 const PilotPricing = lazy(() => import('../pages/Qdos/HirePilot/PilotPricing'));
 const PilotBookings = lazy(() => import('../pages/Qdos/HirePilot/PilotBookings'));
 const PilotLive = lazy(() => import('../pages/Qdos/HirePilot/PilotLive'));
+const PilotApprovals = lazy(() => import('../pages/Qdos/HirePilot/PilotApprovals'));
 const DeliverySurgeSettings = lazy(() => import('../pages/Qdos/DeliverySurge/DeliverySurgeSettings'));
 const RiderPlanForm = lazy(() => import('../pages/Qdos/RiderPlans/RiderPlanForm'));
 const PlatformWallet = lazy(() => import('../pages/Qdos/Wallet/PlatformWallet'));
@@ -124,6 +125,15 @@ const routes = [
         element: (
             <ProtectedRoute allowedRoles={['admin']}>
                 <PilotPricing />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/pilot-approvals',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <PilotApprovals />
             </ProtectedRoute>
         ),
         layout: 'default',

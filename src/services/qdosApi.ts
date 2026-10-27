@@ -372,6 +372,15 @@ export const getPilotBookings = (params: PilotBookingListParams = {}) => apiClie
 
 export const getPilotBookingById = (bookingId: string) => apiClient.get(`/admin/pilot/bookings/${bookingId}`).then((r) => r.data);
 
+// pilot applications — Hire a Pilot has its own approval, separate from the rider account
+export type PilotApplicationStatus = 'pending' | 'approved' | 'rejected';
+
+export const getPilotApplications = (params: { status?: PilotApplicationStatus; search?: string; page?: number; limit?: number } = {}) =>
+    apiClient.get('/admin/pilot/applications', { params }).then((r) => r.data);
+
+export const reviewPilotApplication = (riderId: string, payload: { status: 'approved' | 'rejected'; reason?: string }) =>
+    apiClient.patch(`/admin/pilot/applications/${riderId}`, payload).then((r) => r.data);
+
 // live monitor: { serverTime, counts, bookings (SEARCHING/ACCEPTED/ARRIVED/ONGOING), pilots (online or on a job) }
 export const getPilotLive = () => apiClient.get('/admin/pilot/live').then((r) => r.data);
 

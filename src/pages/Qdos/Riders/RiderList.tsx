@@ -349,6 +349,7 @@ export default function RiderList() {
                                                 <Field label="Hire a Pilot" value={activeRider?.services?.pilot ? 'Yes' : 'No'} />
                                                 {activeRider?.services?.pilot && (
                                                     <>
+                                                        <Field label="Pilot Approval" value={activeRider?.pilotProfile?.status || 'pending'} />
                                                         <Field label="Pilot Drives" value={activeRider?.pilotProfile?.transmissions?.join(', ')} />
                                                         <Field label="Driving Experience" value={activeRider?.pilotProfile?.experienceYears != null ? `${activeRider.pilotProfile.experienceYears} yrs` : undefined} />
                                                         <Field label="Pilot Trips" value={activeRider?.stats?.totalPilotTrips ?? 0} />

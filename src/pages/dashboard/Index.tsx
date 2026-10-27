@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getOrderStats, getRestaurants, getRiders, getPayouts, getUsers, getPilotLive } from '../../services/qdosApi';
+import { getOrderStats, getRestaurants, getRiders, getPayouts, getUsers, getPilotLive, getPilotApplications } from '../../services/qdosApi';
 
 // Qdos admin home — live counts from the real APIs. Each figure loads on
 // its own (allSettled), so one failing endpoint shows "—" instead of
@@ -49,7 +49,7 @@ export default function Dashboard() {
                 getOrderStats(),
                 getRestaurants({ status: 'pending', limit: 1 }),
                 getRiders({ status: 'pending', limit: 1 }),
-                getRiders({ status: 'pending', service: 'pilot', limit: 1 }),
+                getPilotApplications({ status: 'pending', limit: 1 }),
                 getPayouts({ status: 'PENDING' as any, limit: 1 }),
                 getUsers({ role: 'user', limit: 1 }),
                 getRiders({ status: 'approved', limit: 1 }),
@@ -59,7 +59,7 @@ export default function Dashboard() {
             setStats({
                 pendingRestaurants: settled(pRest)?.data?.pagination?.total,
                 pendingRiders: settled(pRiders)?.totalRiders,
-                pendingPilots: settled(pPilots)?.totalRiders,
+                pendingPilots: settled(pPilots)?.data?.counts?.pending,
                 pendingPayouts: settled(pPayouts)?.totalPayouts,
                 totalOrders: o?.totalOrders,
                 activeOrders: o ? ACTIVE_ORDER_STATUSES.reduce((sum, s) => sum + (o.byStatus?.[s] || 0), 0) : undefined,
@@ -89,7 +89,7 @@ export default function Dashboard() {
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <Card title="Restaurants awaiting approval" value={v(stats.pendingRestaurants)} to="/qdos/restaurants" accent="text-yellow-600" testId="dash-pending-restaurants" />
                     <Card title="Riders awaiting approval" value={v(stats.pendingRiders)} to="/qdos/riders" accent="text-yellow-600" testId="dash-pending-riders" />
-                    <Card title="Pilots awaiting approval" value={v(stats.pendingPilots)} to="/qdos/riders" accent="text-yellow-600" hint="Hire a Pilot drivers" testId="dash-pending-pilots" />
+                    <Card title="Pilots awaiting approval" value={v(stats.pendingPilots)} to="/qdos/pilot-approvals" accent="text-yellow-600" hint="Hire a Pilot drivers" testId="dash-pending-pilots" />
                     <Card title="Withdrawal requests" value={v(stats.pendingPayouts)} to="/qdos/payouts" accent="text-orange-600" hint="Pending rider payouts" testId="dash-pending-payouts" />
                 </div>
             </div>
