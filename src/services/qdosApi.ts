@@ -59,6 +59,10 @@ export interface OrderListParams {
     riderId?: string;
     startDate?: string;
     endDate?: string;
+    // only "deliver to someone else" orders
+    forSomeoneElse?: boolean;
+    // order number, or receiver / customer name or phone
+    search?: string;
     page?: number;
     limit?: number;
 }
@@ -68,6 +72,29 @@ export const getOrders = (params: OrderListParams = {}) => apiClient.get('/admin
 export const getOrderById = (orderId: string) => apiClient.get(`/admin/orders/${orderId}`).then((r) => r.data);
 
 export const getOrderStats = (params: { startDate?: string; endDate?: string } = {}) => apiClient.get('/admin/orders/stats', { params }).then((r) => r.data);
+
+// ---- Rides (cab + parcel) ----
+
+export type RideStatus = 'REQUESTED' | 'ACCEPTED' | 'ARRIVED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
+
+export interface RideListParams {
+    // ACTIVE = ACCEPTED + ARRIVED + ONGOING
+    status?: RideStatus | 'ACTIVE';
+    bookingType?: 'PASSENGER' | 'PARCEL';
+    vehicleType?: 'MOTO' | 'AUTO' | 'CAR_ECONOMY' | 'CAR_AC' | 'TEMPO';
+    forSomeoneElse?: boolean;
+    // ride number, or name/phone of booker, passenger, rider, parcel sender/receiver
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+}
+
+// { rides, counts (per status + ACTIVE + ALL), revenue (completed rides), pagination }
+export const getRides = (params: RideListParams = {}) => apiClient.get('/admin/rides', { params }).then((r) => r.data);
+
+export const getRideById = (rideId: string) => apiClient.get(`/admin/rides/${rideId}`).then((r) => r.data);
 
 export const forceCancelOrder = (orderId: string, reason?: string) => apiClient.post(`/admin/orders/${orderId}/force-cancel`, { reason }).then((r) => r.data);
 

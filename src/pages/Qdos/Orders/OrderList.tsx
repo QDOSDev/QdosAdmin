@@ -23,6 +23,9 @@ export default function OrderList() {
     const [statusFilter, setStatusFilter] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [forSomeoneElse, setForSomeoneElse] = useState(false);
     const [stats, setStats] = useState<{ totalOrders: number; byStatus: Record<string, number>; revenue?: any }>({ totalOrders: 0, byStatus: {} });
 
     const detailModal = useDisclosure();
@@ -47,6 +50,8 @@ export default function OrderList() {
                 status: statusFilter || undefined,
                 startDate: startDate || undefined,
                 endDate: endDate || undefined,
+                search: debouncedSearch || undefined,
+                forSomeoneElse: forSomeoneElse || undefined,
                 page,
                 limit: 10,
             });
@@ -60,10 +65,19 @@ export default function OrderList() {
     };
 
     useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(search.trim()), 400);
+        return () => clearTimeout(t);
+    }, [search]);
+
+    useEffect(() => {
         fetchList(1);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [statusFilter, startDate, endDate, debouncedSearch, forSomeoneElse]);
+
+    useEffect(() => {
         fetchStats();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [statusFilter, startDate, endDate]);
+    }, [startDate, endDate]);
 
     const openDetail = async (orderId: string) => {
         detailModal.onOpen();
@@ -159,6 +173,18 @@ export default function OrderList() {
                 <input type="date" className="border border-gray-300 rounded-md px-3 py-2" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
                 <span className="text-gray-400">to</span>
                 <input type="date" className="border border-gray-300 rounded-md px-3 py-2" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                <input
+                    type="text"
+                    className="border border-gray-300 rounded-md px-3 py-2 min-w-[240px]"
+                    placeholder="Search order #, customer or receiver name/phone"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    data-testid="order-search"
+                />
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="checkbox" checked={forSomeoneElse} onChange={(e) => setForSomeoneElse(e.target.checked)} data-testid="order-someone-else" />
+                    For someone else only
+                </label>
             </div>
 
             <div className="table-wrapper overflow-x-auto">
@@ -167,6 +193,7 @@ export default function OrderList() {
                         <tr className="border-b bg-gray-50">
                             <th className="px-4 py-3 text-left">Order #</th>
                             <th className="px-4 py-3 text-left">Restaurant</th>
+                            <th className="px-4 py-3 text-left">Deliver To</th>
                             <th className="px-4 py-3 text-left">Rider</th>
                             <th className="px-4 py-3 text-left">Total</th>
                             <th className="px-4 py-3 text-left">Status</th>
@@ -178,18 +205,25 @@ export default function OrderList() {
                         {loading ? (
                             [...Array(5)].map((_, i) => (
                                 <tr key={i} className="border-b">
-                                    <td className="px-4 py-3" colSpan={7}>
+                                    <td className="px-4 py-3" colSpan={8}>
                                         <div className="w-full rounded h-5 bg-gray-200 animate-pulse" />
                                     </td>
                                 </tr>
                             ))
                         ) : list.length === 0 ? (
-                            <Tableempty length={7} />
+                            <Tableempty length={8} />
                         ) : (
                             list.map((o: any) => (
-                                <tr key={o._id} className="border-b last:border-b-0 hover:shadow-sm">
+                                <tr key={o._id} className="border-b last:border-b-0 hover:shadow-sm" data-testid={`order-row-${o.orderNumber}`}>
                                     <td className="px-4 py-3 font-medium">{o.orderNumber}</td>
                                     <td className="px-4 py-3">{o.restaurantId?.restaurantName || '-'}</td>
+                                    <td className="px-4 py-3">
+                                        <div>{o.address?.receiverName || o.userId?.name || '-'}</div>
+                                        <div className="text-xs text-gray-500">{o.address?.receiverPhone || o.userId?.phone || ''}</div>
+                                        {o.address?.isForSomeoneElse && (
+                                            <span className="inline-block mt-1 px-2 py-0.5 rounded bg-purple-100 text-purple-700 text-[11px] font-medium">For someone else</span>
+                                        )}
+                                    </td>
                                     <td className="px-4 py-3">{o.riderId?.name || '-'}</td>
                                     <td className="px-4 py-3">₹{o.pricing?.total ?? '-'}</td>
                                     <td className="px-4 py-3">
@@ -271,8 +305,10 @@ export default function OrderList() {
                                                 <div>{activeOrder.riderId?.name || '-'}</div>
                                             </div>
                                             <div>
-                                                <div className="text-gray-500">Customer</div>
-                                                <div>{activeOrder.userId?.phone || '-'}</div>
+                                                <div className="text-gray-500">Ordered By</div>
+                                                <div>
+                                                    {activeOrder.userId?.name || '-'} {activeOrder.userId?.phone ? `· ${activeOrder.userId.phone}` : ''}
+                                                </div>
                                             </div>
                                             <div>
                                                 <div className="text-gray-500">Payment</div>
@@ -281,12 +317,66 @@ export default function OrderList() {
                                                 </div>
                                             </div>
                                             <div>
-                                                <div className="text-gray-500">Delivery Address</div>
-                                                <div>{activeOrder.address?.fullAddress || '-'}</div>
-                                            </div>
-                                            <div>
                                                 <div className="text-gray-500">Total</div>
                                                 <div>₹{activeOrder.pricing?.total}</div>
+                                            </div>
+                                        </div>
+                                        <div className={`border rounded-md p-3 ${activeOrder.address?.isForSomeoneElse ? 'border-purple-200 bg-purple-50' : 'border-gray-200'}`} data-testid="order-deliver-to">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="font-medium">Deliver To</span>
+                                                {activeOrder.address?.isForSomeoneElse && (
+                                                    <span className="px-2 py-0.5 rounded bg-purple-100 text-purple-700 text-xs font-medium">Ordered for someone else</span>
+                                                )}
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <div className="text-gray-500">Receiver</div>
+                                                    <div>{activeOrder.address?.receiverName || activeOrder.userId?.name || '-'}</div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-gray-500">Receiver Phone</div>
+                                                    <div>{activeOrder.address?.receiverPhone || activeOrder.userId?.phone || '-'}</div>
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <div className="text-gray-500">Address</div>
+                                                    <div>{activeOrder.address?.fullAddress || '-'}</div>
+                                                    {(activeOrder.address?.street || activeOrder.address?.area) && (
+                                                        <div className="text-gray-500 text-xs">{[activeOrder.address?.street, activeOrder.address?.area].filter(Boolean).join(', ')}</div>
+                                                    )}
+                                                </div>
+                                                {activeOrder.address?.landmark && (
+                                                    <div>
+                                                        <div className="text-gray-500">Landmark</div>
+                                                        <div>{activeOrder.address.landmark}</div>
+                                                    </div>
+                                                )}
+                                                {activeOrder.address?.deliveryInstructions && (
+                                                    <div>
+                                                        <div className="text-gray-500">Delivery Instructions</div>
+                                                        <div>{activeOrder.address.deliveryInstructions}</div>
+                                                    </div>
+                                                )}
+                                                {activeOrder.address?.coordinates?.length === 2 && (
+                                                    <div className="col-span-2">
+                                                        <a
+                                                            className="text-xs underline text-blue-600"
+                                                            href={`https://www.google.com/maps?q=${activeOrder.address.coordinates[1]},${activeOrder.address.coordinates[0]}`}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                        >
+                                                            Open drop location in Google Maps
+                                                        </a>
+                                                    </div>
+                                                )}
+                                                {activeOrder.address?.photos?.length > 0 && (
+                                                    <div className="col-span-2 flex gap-2 flex-wrap">
+                                                        {activeOrder.address.photos.map((ph: any) => (
+                                                            <a key={ph.public_id || ph.url} href={ph.url} target="_blank" rel="noreferrer">
+                                                                <img src={ph.url} alt="Location" className="h-16 w-16 object-cover rounded border" />
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="border-t pt-2">

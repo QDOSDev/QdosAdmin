@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getOrderStats, getRestaurants, getRiders, getPayouts, getUsers, getPilotLive, getPilotApplications } from '../../services/qdosApi';
+import { getOrderStats, getRestaurants, getRiders, getPayouts, getUsers, getPilotLive, getPilotApplications, getRides } from '../../services/qdosApi';
 
 // Qdos admin home — live counts from the real APIs. Each figure loads on
 // its own (allSettled), so one failing endpoint shows "—" instead of
@@ -21,6 +21,7 @@ type Stats = {
     customers?: number;
     approvedRiders?: number;
     pilot?: any;
+    rides?: any;
 };
 
 const settled = <T,>(r: PromiseSettledResult<T>): T | undefined => (r.status === 'fulfilled' ? r.value : undefined);
@@ -45,7 +46,7 @@ export default function Dashboard() {
 
     useEffect(() => {
         (async () => {
-            const [orders, pRest, pRiders, pPilots, pPayouts, customers, approved, pilot] = await Promise.allSettled([
+            const [orders, pRest, pRiders, pPilots, pPayouts, customers, approved, pilot, rides] = await Promise.allSettled([
                 getOrderStats(),
                 getRestaurants({ status: 'pending', limit: 1 }),
                 getRiders({ status: 'pending', limit: 1 }),
@@ -54,6 +55,7 @@ export default function Dashboard() {
                 getUsers({ role: 'user', limit: 1 }),
                 getRiders({ status: 'approved', limit: 1 }),
                 getPilotLive(),
+                getRides({ limit: 1 }),
             ]);
             const o = settled(orders)?.data;
             setStats({
@@ -69,6 +71,7 @@ export default function Dashboard() {
                 customers: settled(customers)?.totalUsers,
                 approvedRiders: settled(approved)?.totalRiders,
                 pilot: settled(pilot)?.data?.counts,
+                rides: settled(rides)?.data,
             });
             setLoading(false);
         })();
@@ -76,6 +79,7 @@ export default function Dashboard() {
 
     const v = (n?: number, prefix = '') => (loading ? '…' : show(n, prefix));
     const pc = stats.pilot || {};
+    const rc = stats.rides?.counts || {};
 
     return (
         <div className="grid gap-6">
@@ -118,6 +122,22 @@ export default function Dashboard() {
                     <Card title="Upcoming scheduled" value={v(pc.upcoming)} to="/qdos/pilot-live" testId="dash-pilot-upcoming" />
                     <Card title="Pilots online" value={v(pc.pilotsOnline)} to="/qdos/pilot-live" testId="dash-pilot-online" />
                     <Card title="Pilots free" value={v(pc.pilotsFree)} to="/qdos/pilot-live" accent="text-green-600" testId="dash-pilot-free" />
+                </div>
+            </div>
+
+            <div>
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold">Cab rides &amp; parcels</h3>
+                    <Link to="/qdos/rides" className="text-sm underline text-blue-600">
+                        Open rides
+                    </Link>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                    <Card title="Searching for a rider" value={v(rc.REQUESTED)} to="/qdos/rides" accent="text-yellow-600" testId="dash-rides-searching" />
+                    <Card title="Active right now" value={v(rc.ACTIVE)} to="/qdos/rides" accent="text-blue-600" testId="dash-rides-active" />
+                    <Card title="Completed" value={v(rc.COMPLETED)} to="/qdos/rides" accent="text-green-600" testId="dash-rides-completed" />
+                    <Card title="Cancelled" value={v(rc.CANCELLED)} to="/qdos/rides" accent="text-red-600" testId="dash-rides-cancelled" />
+                    <Card title="Fare collected" value={v(stats.rides?.revenue?.fareCollected, '₹')} hint="Completed rides, cash" testId="dash-rides-fare" />
                 </div>
             </div>
 
