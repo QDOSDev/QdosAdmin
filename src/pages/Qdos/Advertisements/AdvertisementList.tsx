@@ -3,7 +3,18 @@ import { message } from 'antd';
 import { Modal, ModalContent, ModalHeader, ModalBody, useDisclosure } from '@nextui-org/react';
 import Edit from '../../../../public/assets/APSIcon/Edit';
 import Tableempty from '../../Tableempty';
-import { getAdvertisements, uploadAdvertisements, updateAdvertisement, deleteAdvertisement, Advertisement, AdvertisementType, BANNER_PLACEMENTS, BannerPlacement } from '../../../services/qdosApi';
+import {
+    getAdvertisements,
+    uploadAdvertisements,
+    updateAdvertisement,
+    deleteAdvertisement,
+    getCoupons,
+    Advertisement,
+    AdvertisementCoupon,
+    AdvertisementType,
+    BANNER_PLACEMENTS,
+    BannerPlacement,
+} from '../../../services/qdosApi';
 
 const MAX_FILES = 10;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -23,6 +34,12 @@ const TYPE_INFO: Record<AdvertisementType, { label: string; one: string; help: s
 
 const toDateInput = (d?: string | null) => (d ? new Date(d).toISOString().slice(0, 10) : '');
 
+const COUPON_KIND: Record<AdvertisementCoupon['appliesTo'], string> = { ORDER: 'Food', RIDE: 'Ride' };
+
+// "FLAT150 · Food · ₹150 off"
+const couponLabel = (c: AdvertisementCoupon) =>
+    `${c.code} · ${COUPON_KIND[c.appliesTo] || c.appliesTo} · ${c.discountType === 'PERCENTAGE' ? `${c.discountValue}% off` : `₹${c.discountValue} off`}`;
+
 interface BannerForm {
     type: AdvertisementType;
     placement: BannerPlacement;
@@ -30,6 +47,7 @@ interface BannerForm {
     subtitle: string;
     ctaText: string;
     linkUrl: string;
+    coupon: string;
     displayOrder: string;
     startDate: string;
     endDate: string;
@@ -42,6 +60,7 @@ const emptyForm = (type: AdvertisementType = 'BANNER', placement: BannerPlacemen
     subtitle: '',
     ctaText: '',
     linkUrl: '',
+    coupon: '',
     displayOrder: '',
     startDate: '',
     endDate: '',
@@ -81,6 +100,7 @@ export default function AdvertisementList() {
     const [editingAd, setEditingAd] = useState<Advertisement | null>(null);
     const [form, setForm] = useState<BannerForm>(emptyForm());
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [coupons, setCoupons] = useState<AdvertisementCoupon[]>([]);
 
     const fetchList = async () => {
         setLoading(true);
@@ -99,6 +119,15 @@ export default function AdvertisementList() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tab, kind]);
 
+    useEffect(() => {
+        // offers a banner can link to — only Food and Ride coupons have an app screen to open
+        getCoupons({ status: 'active', limit: 500 })
+            .then((res) => setCoupons((res?.coupons || []).filter((c: AdvertisementCoupon) => c.appliesTo === 'ORDER' || c.appliesTo === 'RIDE')))
+            .catch(() => {
+                // non-critical -- the dropdown just only offers "No offer"
+            });
+    }, []);
+
     useEffect(
         () => () => {
             if (filePreview) URL.revokeObjectURL(filePreview);
@@ -110,6 +139,7 @@ export default function AdvertisementList() {
 
     const openUploadModal = () => {
         setForm(emptyForm(kind, tab || 'HOME'));
+        setEditingAd(null);
         setFiles([]);
         setFilePreview(undefined);
         uploadModal.onOpen();
@@ -144,6 +174,7 @@ export default function AdvertisementList() {
                     subtitle: form.subtitle.trim(),
                     ctaText: form.ctaText.trim(),
                     linkUrl: form.linkUrl.trim(),
+                    coupon: form.coupon,
                 },
                 form.type,
             );
@@ -181,6 +212,7 @@ export default function AdvertisementList() {
             subtitle: ad.subtitle || '',
             ctaText: ad.ctaText || '',
             linkUrl: ad.linkUrl || '',
+            coupon: ad.coupon?._id || '',
             displayOrder: String(ad.displayOrder ?? ''),
             startDate: toDateInput(ad.startDate),
             endDate: toDateInput(ad.endDate),
@@ -201,6 +233,7 @@ export default function AdvertisementList() {
                 subtitle: form.subtitle.trim(),
                 ctaText: form.ctaText.trim(),
                 linkUrl: form.linkUrl.trim(),
+                coupon: form.coupon || null,
                 ...(form.displayOrder !== '' && { displayOrder: Number(form.displayOrder) }),
                 startDate: form.startDate ? new Date(`${form.startDate}T00:00:00`).toISOString() : null,
                 endDate: form.endDate ? new Date(`${form.endDate}T23:59:59`).toISOString() : null,
@@ -267,8 +300,28 @@ export default function AdvertisementList() {
                     className="w-full border border-gray-300 rounded-md"
                     value={form.linkUrl}
                     onChange={(e) => setForm({ ...form, linkUrl: e.target.value })}
-                    placeholder="Deep link or URL to open when tapped"
+                    placeholder={form.coupon ? 'Not used while an offer is linked' : 'Deep link or URL to open when tapped'}
+                    disabled={!!form.coupon}
                 />
+            </div>
+            <div className="input-field col-span-2">
+                <label>Linked offer (optional)</label>
+                <select className="w-full border border-gray-300 rounded-md" value={form.coupon} onChange={(e) => setForm({ ...form, coupon: e.target.value })} data-testid="banner-coupon">
+                    <option value="">No offer</option>
+                    {/* keep the current one selectable even after it has ended */}
+                    {editingAd?.coupon && !coupons.some((c) => c._id === editingAd.coupon!._id) && (
+                        <option value={editingAd.coupon._id}>{couponLabel(editingAd.coupon)} (ended)</option>
+                    )}
+                    {coupons.map((c) => (
+                        <option key={c._id} value={c._id}>
+                            {couponLabel(c)}
+                        </option>
+                    ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-1">
+                    Tapping opens the offer: a Food coupon shows the restaurants it works at, a Ride coupon opens ride booking with the code applied. The app stops showing this
+                    once the coupon expires, is paused or is used up.
+                </p>
             </div>
         </>
     );
@@ -345,7 +398,7 @@ export default function AdvertisementList() {
                             <th className="px-4 py-3 text-left">Preview</th>
                             <th className="px-4 py-3 text-left">Screen</th>
                             <th className="px-4 py-3 text-left">Text</th>
-                            <th className="px-4 py-3 text-left">Link</th>
+                            <th className="px-4 py-3 text-left">Opens</th>
                             <th className="px-4 py-3 text-left">Order</th>
                             <th className="px-4 py-3 text-left">Schedule</th>
                             <th className="px-4 py-3 text-left">Active</th>
@@ -383,7 +436,16 @@ export default function AdvertisementList() {
                                             <span className="text-gray-400">Image only</span>
                                         )}
                                     </td>
-                                    <td className="px-4 py-3 max-w-[160px] truncate">{ad.linkUrl || <span className="text-gray-400">—</span>}</td>
+                                    <td className="px-4 py-3 max-w-[180px] truncate">
+                                        {ad.coupon ? (
+                                            <>
+                                                <span className="px-2 py-1 rounded-md text-xs font-medium bg-yellow-50 text-yellow-800">{couponLabel(ad.coupon)}</span>
+                                                {ad.couponUsable === false && <div className="text-xs text-red-500 mt-1">Offer ended — hidden in app</div>}
+                                            </>
+                                        ) : (
+                                            ad.linkUrl || <span className="text-gray-400">—</span>
+                                        )}
+                                    </td>
                                     <td className="px-4 py-3">{ad.displayOrder}</td>
                                     <td className="px-4 py-3 text-xs text-gray-500">
                                         {ad.startDate || ad.endDate ? (

@@ -311,6 +311,10 @@ export interface Advertisement {
     subtitle?: string;
     ctaText?: string;
     linkUrl?: string;
+    // linked offer — populated in the admin list
+    coupon?: AdvertisementCoupon | null;
+    // false = the app is hiding it because the linked offer ended
+    couponUsable?: boolean | null;
     displayOrder: number;
     isActive: boolean;
     startDate?: string | null;
@@ -318,7 +322,16 @@ export interface Advertisement {
     createdAt?: string;
 }
 
-export type BannerText = Partial<Pick<Advertisement, 'title' | 'subtitle' | 'ctaText' | 'linkUrl'>>;
+export interface AdvertisementCoupon {
+    _id: string;
+    code: string;
+    appliesTo: 'ORDER' | 'RIDE';
+    discountType: 'PERCENTAGE' | 'FIXED';
+    discountValue: number;
+    validUntil?: string;
+}
+
+export type BannerText = Partial<Pick<Advertisement, 'title' | 'subtitle' | 'ctaText' | 'linkUrl'>> & { coupon?: string };
 
 // multiple files in one request — each becomes its own banner/ad on that screen
 export const uploadAdvertisements = (files: File[], placement: BannerPlacement = 'HOME', text: BannerText = {}, type: AdvertisementType = 'BANNER') => {
@@ -335,7 +348,7 @@ export const getAdvertisements = (params: { type?: AdvertisementType; placement?
 
 export const updateAdvertisement = (
     adId: string,
-    payload: Partial<Pick<Advertisement, 'type' | 'placement' | 'title' | 'subtitle' | 'ctaText' | 'linkUrl' | 'displayOrder' | 'isActive' | 'startDate' | 'endDate'>>
+    payload: Partial<Pick<Advertisement, 'type' | 'placement' | 'title' | 'subtitle' | 'ctaText' | 'linkUrl' | 'displayOrder' | 'isActive' | 'startDate' | 'endDate'>> & { coupon?: string | null }
 ) => apiClient.patch(`/admin/advertisements/${adId}`, payload).then((r) => r.data);
 
 export const deleteAdvertisement = (adId: string) => apiClient.delete(`/admin/advertisements/${adId}`).then((r) => r.data);
