@@ -296,12 +296,20 @@ export const getDeliverySurgeAudit = (params: { page?: number; limit?: number } 
 export const getChatMessages = (refType: 'Order' | 'Ride', refId: string) =>
     apiClient.get(`/admin/chats/${refType}/${refId}/messages`, { params: { limit: 200 } }).then((r) => r.data);
 
-// ---- Advertisements (home screen carousel banners in the user app) ----
+// ---- Banners & Ads (per user-app screen: BANNER = top carousel, AD = the ads row) ----
+
+export const BANNER_PLACEMENTS = ['HOME', 'FOOD', 'GROCERY', 'RIDES', 'SERVICES'] as const;
+export type BannerPlacement = (typeof BANNER_PLACEMENTS)[number];
+export type AdvertisementType = 'BANNER' | 'AD';
 
 export interface Advertisement {
     _id: string;
     image: { url: string; public_id: string };
+    type: AdvertisementType;
+    placement: BannerPlacement;
     title?: string;
+    subtitle?: string;
+    ctaText?: string;
     linkUrl?: string;
     displayOrder: number;
     isActive: boolean;
@@ -310,18 +318,25 @@ export interface Advertisement {
     createdAt?: string;
 }
 
-// multiple files in one request — each becomes its own banner
-export const uploadAdvertisements = (files: File[]) => {
+export type BannerText = Partial<Pick<Advertisement, 'title' | 'subtitle' | 'ctaText' | 'linkUrl'>>;
+
+// multiple files in one request — each becomes its own banner/ad on that screen
+export const uploadAdvertisements = (files: File[], placement: BannerPlacement = 'HOME', text: BannerText = {}, type: AdvertisementType = 'BANNER') => {
     const form = new FormData();
     files.forEach((file) => form.append('images', file));
+    form.append('type', type);
+    form.append('placement', placement);
+    Object.entries(text).forEach(([k, v]) => v && form.append(k, v));
     return apiClient.post('/admin/advertisements', form, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data);
 };
 
-export const getAdvertisements = (params: { page?: number; limit?: number } = {}) =>
+export const getAdvertisements = (params: { type?: AdvertisementType; placement?: BannerPlacement; page?: number; limit?: number } = {}) =>
     apiClient.get('/admin/advertisements', { params }).then((r) => r.data);
 
-export const updateAdvertisement = (adId: string, payload: Partial<Pick<Advertisement, 'title' | 'linkUrl' | 'displayOrder' | 'isActive' | 'startDate' | 'endDate'>>) =>
-    apiClient.patch(`/admin/advertisements/${adId}`, payload).then((r) => r.data);
+export const updateAdvertisement = (
+    adId: string,
+    payload: Partial<Pick<Advertisement, 'type' | 'placement' | 'title' | 'subtitle' | 'ctaText' | 'linkUrl' | 'displayOrder' | 'isActive' | 'startDate' | 'endDate'>>
+) => apiClient.patch(`/admin/advertisements/${adId}`, payload).then((r) => r.data);
 
 export const deleteAdvertisement = (adId: string) => apiClient.delete(`/admin/advertisements/${adId}`).then((r) => r.data);
 

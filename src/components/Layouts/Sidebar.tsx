@@ -186,7 +186,7 @@ const Sidebar = () => {
                                                 <NavLink to="/qdos/advertisements" className="group" onClick={() => toggleMenu('')}>
                                                     <div className="flex items-center">
                                                         <Reports className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
-                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Advertisements')}</span>
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Banners & Ads')}</span>
                                                     </div>
                                                 </NavLink>
                                             </li>
