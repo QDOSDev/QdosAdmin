@@ -55,7 +55,7 @@ export default function CouponList() {
     const fetchRestaurants = async () => {
         try {
             const res = await getRestaurants({ limit: 10000 });
-            setRestaurants(res?.restaurants || []);
+            setRestaurants(res?.data?.restaurants || []);
         } catch {
             // non-critical -- the restaurant picker just falls back to "all restaurants" only
         }
