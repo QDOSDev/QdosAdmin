@@ -445,3 +445,64 @@ export const cancelPilotBooking = (bookingId: string, payload: { reason?: string
 
 // only for a booking whose refund.status is FAILED
 export const retryPilotRefund = (bookingId: string) => apiClient.post(`/admin/pilot/bookings/${bookingId}/refund`).then((r) => r.data);
+
+// ---- Help & Support (tickets from the customer and partner apps) ----
+export type SupportStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED';
+export type SupportRole = 'USER' | 'PARTNER';
+
+export interface SupportAttachment {
+    url: string;
+    public_id: string;
+    name?: string;
+    mimeType?: string;
+}
+
+export interface SupportTicket {
+    _id: string;
+    ticketNo: string;
+    raisedByRole: SupportRole;
+    raisedBy: string;
+    partnerId?: string | null;
+    raiser?: { name?: string; phone?: string };
+    category: string;
+    categoryLabel: string;
+    issueType: string;
+    service?: string | null;
+    serviceLabel?: string | null;
+    description: string;
+    attachments: SupportAttachment[];
+    status: SupportStatus;
+    resolvedAt?: string | null;
+    lastMessage?: string;
+    lastMessageAt: string;
+    unread: number;
+    createdAt: string;
+}
+
+export interface SupportMessage {
+    _id: string;
+    ticketId: string;
+    senderRole: 'USER' | 'PARTNER' | 'ADMIN';
+    senderName?: string;
+    message: string;
+    attachments: SupportAttachment[];
+    isAuto: boolean;
+    readAt?: string | null;
+    createdAt: string;
+}
+
+export const getSupportTickets = (params: { status?: SupportStatus | 'ALL'; role?: SupportRole; service?: string; search?: string; page?: number; limit?: number } = {}) =>
+    apiClient.get('/admin/support/tickets', { params }).then((r) => r.data);
+
+export const getSupportTicket = (ticketId: string) => apiClient.get(`/admin/support/tickets/${ticketId}`).then((r) => r.data);
+
+export const sendSupportMessage = (ticketId: string, text: string, files: File[] = []) => {
+    const form = new FormData();
+    if (text) form.append('message', text);
+    files.forEach((f) => form.append('attachments', f));
+    return apiClient.post(`/admin/support/tickets/${ticketId}/messages`, form, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data);
+};
+
+export const updateSupportStatus = (ticketId: string, status: SupportStatus) => apiClient.patch(`/admin/support/tickets/${ticketId}/status`, { status }).then((r) => r.data);
+
+export const markSupportRead = (ticketId: string) => apiClient.post(`/admin/support/tickets/${ticketId}/read`).then((r) => r.data);
