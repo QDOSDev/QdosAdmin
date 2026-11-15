@@ -27,6 +27,25 @@ const emptyForm = {
     isActive: true,
 };
 
+// local yyyy-mm-dd for the date inputs — slicing the ISO string gives the
+// UTC date, a day early for a coupon that starts at 00:00 IST
+const toDateInput = (d?: string | Date) => {
+    if (!d) return '';
+    const x = new Date(d);
+    return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+};
+
+const isExpired = (c: any) => !!c.validUntil && new Date(c.validUntil) < new Date();
+
+// the backend switches a coupon off once validUntil passes; this also covers
+// the moment between it expiring and the next refresh
+const couponStatus = (c: any) => {
+    if (isExpired(c)) return { label: 'Expired', cls: 'bg-red-50 text-red-600' };
+    if (!c.isActive) return { label: 'Inactive', cls: 'bg-gray-100 text-gray-600' };
+    if (c.validFrom && new Date(c.validFrom) > new Date()) return { label: 'Scheduled', cls: 'bg-blue-50 text-blue-600' };
+    return { label: 'Active', cls: 'bg-green-100 text-green-700' };
+};
+
 export default function CouponList() {
     const [list, setList] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -38,6 +57,8 @@ export default function CouponList() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState(emptyForm);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // the coupon being edited had expired (so it was switched off automatically)
+    const [expiredOn, setExpiredOn] = useState<string | null>(null);
 
     const fetchList = async (page = 1) => {
         setLoading(true);
@@ -68,6 +89,7 @@ export default function CouponList() {
 
     const openCreateModal = () => {
         setEditingId(null);
+        setExpiredOn(null);
         setFormData(emptyForm);
         modal.onOpen();
     };
@@ -87,10 +109,11 @@ export default function CouponList() {
             fundedBy: coupon.fundedBy || 'PLATFORM',
             platformSharePercent: coupon.platformSharePercent ?? 50,
             usageLimit: coupon.usageLimit || 0,
-            validFrom: coupon.validFrom ? coupon.validFrom.slice(0, 10) : '',
-            validUntil: coupon.validUntil ? coupon.validUntil.slice(0, 10) : '',
-            isActive: coupon.isActive ?? true,
+            validFrom: toDateInput(coupon.validFrom),
+            validUntil: toDateInput(coupon.validUntil),
+            isActive: isExpired(coupon) ? false : coupon.isActive ?? true,
         });
+        setExpiredOn(isExpired(coupon) ? new Date(coupon.validUntil).toLocaleDateString() : null);
         modal.onOpen();
     };
 
@@ -208,8 +231,8 @@ export default function CouponList() {
                                     <td className="px-4 py-3">{c.minOrderValue || 0}</td>
                                     <td className="px-4 py-3">{c.validUntil ? new Date(c.validUntil).toLocaleDateString() : '-'}</td>
                                     <td className="px-4 py-3">
-                                        <span className={`px-2 py-1 rounded-md text-xs font-medium ${c.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                                            {c.isActive ? 'Active' : 'Inactive'}
+                                        <span className={`px-2 py-1 rounded-md text-xs font-medium ${couponStatus(c).cls}`} data-testid={`coupon-status-${c.code}`}>
+                                            {couponStatus(c).label}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3">
@@ -446,13 +469,25 @@ export default function CouponList() {
                                             type="date"
                                             className="w-full border border-gray-300 rounded-md"
                                             value={formData.validUntil}
-                                            onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
+                                            onChange={(e) => {
+                                                const validUntil = e.target.value;
+                                                // extending an expired coupon brings it back
+                                                const revive = !!expiredOn && validUntil >= toDateInput(new Date());
+                                                setFormData({ ...formData, validUntil, ...(revive && { isActive: true }) });
+                                            }}
                                         />
                                     </div>
                                     {editingId && (
-                                        <div className="input-field flex items-center gap-2">
-                                            <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
-                                            <label>Active</label>
+                                        <div className="input-field col-span-2">
+                                            <div className="flex items-center gap-2">
+                                                <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
+                                                <label>Active</label>
+                                            </div>
+                                            {expiredOn && (
+                                                <p className="text-xs text-red-500 mt-1" data-testid="coupon-expired-note">
+                                                    This coupon expired on {expiredOn} and was switched off automatically. Choose a new Valid Until date to turn it back on.
+                                                </p>
+                                            )}
                                         </div>
                                     )}
                                     <div className="flex justify-start gap-2 mt-2 col-span-2">
