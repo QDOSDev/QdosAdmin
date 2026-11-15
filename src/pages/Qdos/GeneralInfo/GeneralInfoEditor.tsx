@@ -20,9 +20,15 @@ const empty: GeneralInfoContent = {
     privacyPolicy: '',
     refundPolicy: '',
     partnerTerms: '',
+    links: { aboutUs: '', terms: '', privacyPolicy: '', refundPolicy: '', partnerTerms: '' },
     contact: { phone: '', email: '', whatsapp: '', address: '', hours: '' },
     faqs: [],
 };
+
+const isUrl = (v: string) => /^https?:\/\/\S+\.\S+/i.test(v.trim());
+
+// merge the API response over the defaults so missing keys never break the form
+const normalize = (d: any): GeneralInfoContent => ({ ...empty, ...d, links: { ...empty.links, ...d?.links }, contact: { ...empty.contact, ...d?.contact } });
 
 export default function GeneralInfoEditor() {
     const [data, setData] = useState<GeneralInfoContent>(empty);
@@ -35,7 +41,7 @@ export default function GeneralInfoEditor() {
         setLoading(true);
         try {
             const res = await getGeneralInfo();
-            const d = { ...empty, ...res?.data, contact: { ...empty.contact, ...res?.data?.contact } };
+            const d = normalize(res?.data);
             setData(d);
             setSaved(JSON.stringify(d));
         } catch (error: any) {
@@ -51,6 +57,11 @@ export default function GeneralInfoEditor() {
     const dirty = !loading && JSON.stringify(data) !== saved;
 
     const save = async () => {
+        const bad = PAGES.find((p) => data.links[p.key].trim() && !isUrl(data.links[p.key]));
+        if (bad) {
+            setSection(bad.key);
+            return message.error(`${bad.title}: the link must be a full web address starting with https://`);
+        }
         setSaving(true);
         try {
             const res = await updateGeneralInfo({
@@ -59,10 +70,11 @@ export default function GeneralInfoEditor() {
                 privacyPolicy: data.privacyPolicy,
                 refundPolicy: data.refundPolicy,
                 partnerTerms: data.partnerTerms,
+                links: Object.fromEntries(PAGES.map((p) => [p.key, data.links[p.key].trim()])) as GeneralInfoContent['links'],
                 contact: data.contact,
                 faqs: data.faqs,
             });
-            const d = { ...empty, ...res?.data, contact: { ...empty.contact, ...res?.data?.contact } };
+            const d = normalize(res?.data);
             setData(d);
             setSaved(JSON.stringify(d));
             message.success('Saved — the apps show it right away.');
@@ -103,7 +115,7 @@ export default function GeneralInfoEditor() {
             <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
                 <div>
                     <h2 className="text-lg font-semibold">General Info</h2>
-                    <p className="text-sm text-gray-500 mt-1">What the apps show under Settings → General Info. Empty pages are hidden in the app.</p>
+                    <p className="text-sm text-gray-500 mt-1">What the apps show under Settings → General Info. For each page, add a link to your website, or write the text here.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     {dirty && <span className="text-xs text-orange-600">Unsaved changes</span>}
@@ -118,16 +130,46 @@ export default function GeneralInfoEditor() {
             ) : (
                 <div className="flex flex-col md:flex-row gap-6">
                     <div className="md:w-60 shrink-0 space-y-1">
-                        {PAGES.map((p) => navItem(p.key, p.title, p.where, !!data[p.key]?.trim()))}
+                        {PAGES.map((p) => navItem(p.key, data.links[p.key].trim() ? `${p.title} 🔗` : p.title, p.where, !!(data[p.key]?.trim() || data.links[p.key].trim())))}
                         {navItem('contact', 'Contact Us', 'Both apps', !!(data.contact.phone || data.contact.email))}
                         {navItem('faqs', `FAQs (${data.faqs.length})`, 'Per app', data.faqs.length > 0)}
                     </div>
 
                     <div className="flex-1 min-w-0">
                         {page && (
-                            <div className="input-field">
+                            <div className="input-field mb-5">
                                 <label>
-                                    {page.title} <span className="text-gray-400 font-normal">· {page.where}</span>
+                                    Link to web page <span className="text-gray-400 font-normal">(optional)</span>
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        className="flex-1 border border-gray-300 rounded-md px-3"
+                                        placeholder={`e.g. https://your-site.vercel.app/${page.key === 'privacyPolicy' ? 'privacy-policy' : page.key === 'refundPolicy' ? 'refund-policy' : page.key === 'partnerTerms' ? 'partner-terms' : page.key === 'aboutUs' ? 'about' : 'terms'}`}
+                                        value={data.links[page.key]}
+                                        onChange={(e) => setData({ ...data, links: { ...data.links, [page.key]: e.target.value } })}
+                                        data-testid="gi-link"
+                                    />
+                                    {isUrl(data.links[page.key]) && (
+                                        <a href={data.links[page.key].trim()} target="_blank" rel="noreferrer" className="px-4 py-2 border border-gray-300 rounded-md text-sm whitespace-nowrap">
+                                            Open ↗
+                                        </a>
+                                    )}
+                                </div>
+                                {data.links[page.key].trim() && !isUrl(data.links[page.key]) && <p className="text-xs text-red-500 mt-1">Enter a full web address starting with https://</p>}
+                                <p className="text-xs text-gray-500 mt-1" data-testid="gi-source-note">
+                                    {data.links[page.key].trim()
+                                        ? 'The app opens this web page. The text below is not shown while a link is set.'
+                                        : data[page.key].trim()
+                                          ? 'The app shows the text below.'
+                                          : "Nothing set here — the app opens its own built-in link for this page."}
+                                </p>
+                            </div>
+                        )}
+
+                        {page && (
+                            <div className={`input-field ${data.links[page.key].trim() ? 'opacity-60' : ''}`}>
+                                <label>
+                                    {page.title} text <span className="text-gray-400 font-normal">· {page.where}</span>
                                 </label>
                                 <textarea
                                     rows={18}

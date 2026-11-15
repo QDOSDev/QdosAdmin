@@ -544,6 +544,8 @@ export interface GeneralInfoContent {
     privacyPolicy: string;
     refundPolicy: string;
     partnerTerms: string;
+    // optional web page per page (e.g. the landing site) — the app opens it instead of the text
+    links: { aboutUs: string; terms: string; privacyPolicy: string; refundPolicy: string; partnerTerms: string };
     contact: { phone: string; email: string; whatsapp: string; address: string; hours: string };
     faqs: GeneralInfoFaq[];
     updatedAt?: string | null;
