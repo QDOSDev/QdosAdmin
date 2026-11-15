@@ -506,3 +506,49 @@ export const sendSupportMessage = (ticketId: string, text: string, files: File[]
 export const updateSupportStatus = (ticketId: string, status: SupportStatus) => apiClient.patch(`/admin/support/tickets/${ticketId}/status`, { status }).then((r) => r.data);
 
 export const markSupportRead = (ticketId: string) => apiClient.post(`/admin/support/tickets/${ticketId}/read`).then((r) => r.data);
+
+// ---- Payments & Refunds (customer online payments: food orders + Hire a Pilot) ----
+export type PaymentRecordStatus = 'CREATED' | 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
+
+export const getAdminPayments = (params: { status?: PaymentRecordStatus; paymentFor?: 'ORDER' | 'PILOT_BOOKING'; search?: string; page?: number; limit?: number } = {}) =>
+    apiClient.get('/admin/payments', { params }).then((r) => r.data);
+
+export const getAdminRefunds = (params: { status?: 'REFUNDED' | 'FAILED' | 'PENDING'; type?: 'ORDER' | 'PILOT_BOOKING'; search?: string; page?: number; limit?: number } = {}) =>
+    apiClient.get('/admin/refunds', { params }).then((r) => r.data);
+
+// ---- Notifications (announcements / offers to the apps) ----
+export interface BroadcastPayload {
+    title: string;
+    message: string;
+    category: 'ANNOUNCEMENT' | 'OFFER';
+    audience: 'USERS' | 'PARTNERS' | 'ALL' | 'PHONE';
+    phone?: string;
+    linkUrl?: string;
+}
+
+export const sendBroadcast = (payload: BroadcastPayload) => apiClient.post('/admin/notifications/broadcast', payload).then((r) => r.data);
+
+export const getBroadcasts = (params: { page?: number; limit?: number } = {}) => apiClient.get('/admin/notifications/broadcasts', { params }).then((r) => r.data);
+
+// ---- General Info (app's About / Terms / Privacy / FAQs / contact) ----
+export interface GeneralInfoFaq {
+    _id?: string;
+    question: string;
+    answer: string;
+    audience: 'ALL' | 'USER' | 'PARTNER';
+}
+
+export interface GeneralInfoContent {
+    aboutUs: string;
+    terms: string;
+    privacyPolicy: string;
+    refundPolicy: string;
+    partnerTerms: string;
+    contact: { phone: string; email: string; whatsapp: string; address: string; hours: string };
+    faqs: GeneralInfoFaq[];
+    updatedAt?: string | null;
+}
+
+export const getGeneralInfo = () => apiClient.get('/admin/general-info').then((r) => r.data);
+
+export const updateGeneralInfo = (payload: Partial<GeneralInfoContent>) => apiClient.put('/admin/general-info', payload).then((r) => r.data);

@@ -25,6 +25,9 @@ const RiderList = lazy(() => import('../pages/Qdos/Riders/RiderList'));
 const CreateAdmin = lazy(() => import('../pages/Qdos/Admins/CreateAdmin'));
 const AdvertisementList = lazy(() => import('../pages/Qdos/Advertisements/AdvertisementList'));
 const SupportTickets = lazy(() => import('../pages/Qdos/Support/SupportTickets'));
+const PaymentsRefunds = lazy(() => import('../pages/Qdos/Payments/PaymentsRefunds'));
+const NotificationCenter = lazy(() => import('../pages/Qdos/Notifications/NotificationCenter'));
+const GeneralInfoEditor = lazy(() => import('../pages/Qdos/GeneralInfo/GeneralInfoEditor'));
 
 const routes = [
     {
@@ -82,6 +85,33 @@ const routes = [
         element: (
             <ProtectedRoute allowedRoles={['admin']}>
                 <DeliverySurgeSettings />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/payments',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <PaymentsRefunds />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/notifications',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <NotificationCenter />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/qdos/general-info',
+        element: (
+            <ProtectedRoute allowedRoles={['admin']}>
+                <GeneralInfoEditor />
             </ProtectedRoute>
         ),
         layout: 'default',

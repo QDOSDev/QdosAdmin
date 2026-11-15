@@ -183,6 +183,33 @@ const Sidebar = () => {
                                             </li>
 
                                             <li className="nav-item">
+                                                <NavLink to="/qdos/payments" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <Reports className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Payments & Refunds')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
+                                                <NavLink to="/qdos/notifications" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <Schedule className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('Notifications')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
+                                                <NavLink to="/qdos/general-info" className="group" onClick={() => toggleMenu('')}>
+                                                    <div className="flex items-center">
+                                                        <Managesite className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
+                                                        <span className="ltr:pl-3 rtl:pr-3 sidebartext">{t('General Info')}</span>
+                                                    </div>
+                                                </NavLink>
+                                            </li>
+
+                                            <li className="nav-item">
                                                 <NavLink to="/qdos/support" className="group" onClick={() => toggleMenu('')}>
                                                     <div className="flex items-center">
                                                         <CRMPermissionIcon className="group-hover:!text-[#A1AEC0] shrink-0 text-[#A1AEC0]" />
